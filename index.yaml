@@ -1,0 +1,43 @@
+apiVersion: v1
+entries:
+  openldap-stack-ha:
+  - apiVersion: v2
+    appVersion: 2.6.6
+    created: "2023-10-11T20:51:10.55962755Z"
+    dependencies:
+    - condition: ltb-passwd.enabled
+      name: ltb-passwd
+      repository: ""
+      version: 0.1.x
+    - condition: phpldapadmin.enabled
+      name: phpldapadmin
+      repository: ""
+      version: 0.1.x
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    description: OpenLDAP directory server, with support from Symas Corp.
+    digest: a709b328378706c1b7ec7708a1d6423da04486836ca1e3e9f0fe25a9f9c1d112
+    home: https://www.openldap.org
+    icon: https://raw.githubusercontent.com/symas/helm-openldap/master/logo.png
+    keywords:
+    - directory
+    - high availability
+    - iam-stack
+    - ldap
+    - openldap
+    - symas
+    maintainers:
+    - email: support@symas.com
+      name: Symas Corp.
+    - email: gburd@symas.com
+      name: Gregory Burd
+    name: openldap-stack-ha
+    sources:
+    - https://github.com/symas/helm-openldap
+    urls:
+    - openldap-stack-ha-1.0.0.tgz
+    version: 1.0.0
+generated: "2023-10-11T20:51:10.555912881Z"
