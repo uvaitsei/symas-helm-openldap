@@ -1,49 +1,83 @@
-[![build](https://github.com/jp-gouin/helm-openldap/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/jp-gouin/helm-openldap/actions/workflows/ci.yml)
+[![build](https://github.com/symas/helm-openldap/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/symas/helm-openldap/actions/workflows/ci.yml)
 [![Artifact HUB](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/helm-openldap)](https://artifacthub.io/packages/search?repo=helm-openldap)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/apache/apisix/blob/master/LICENSE)
 ![Version](https://img.shields.io/static/v1?label=Openldap&message=2.6.3&color=blue)
 
-# OpenLDAP Helm Chart
-## Disclaimer
-This version now use the [Bitnami Openldap](https://hub.docker.com/r/bitnami/openldap) container image.
-
-More detail on the container image can be found [here](https://github.com/bitnami/containers/tree/main/bitnami/openldap)
-
-There are some major changes between the Osixia version and the Bitnami version , ergo the major gap of the chart version.
-
-- Upgrade may not work fine between `3.x` and `4.x`
-- Ldap and Ldaps port are non privileged ports (`1389` and `1636`) internally but are exposed through `global.ldapPort` and `global.sslLdapPort` (389 and 636)
-- Replication is now purely setup by configuration. Extra schemas are loaded using `LDAP_EXTRA_SCHEMAS: "cosine,inetorgperson,nis,syncprov,serverid,csyncprov,rep,bsyncprov,brep,acls`. You can add your own schemas via the `customSchemaFiles` option.
-
-A default tree (Root organisation, users and group) is created during startup, this can be skipped using `LDAP_SKIP_DEFAULT_TREE` , however you need to use `customLdifFiles` or `customLdifCm` to create a root organisation.
-
-- This will be improved in a future update.
-
-## Prerequisites Details
-* Kubernetes 1.8+
-* PV support on the underlying infrastructure
-
-## Chart Details
-This chart will do the following:
-
-* Instantiate 3 instances of OpenLDAP server with multi-master replication
-* A phpldapadmin to administrate the OpenLDAP server
-* ltb-passwd for self service password
+# Supported OpenLDAP Helm Chart by Symas Corp
 
 ## TL;DR
 
 To install the chart with the release name `my-release`:
 
 ```bash
-$ helm repo add helm-openldap https://jp-gouin.github.io/helm-openldap/
+$ helm repo add helm-openldap https://symas.github.io/helm-openldap/
 $ helm install my-release helm-openldap/openldap-stack-ha
 ```
 
+## What's here?
+
+A Helm cart to deploy and manage your [OpenLDAP](https://openldap.org) instance on
+Kubernetes provided by [Symas](https://symas.com), ready for production use.
+
+
+## How to contact Symas for commercial support
+
+This [Helm chart](https://helm.sh/) packages the [Symas OpenLDAP container](https://github.com/symas/containers/tree/main/openldap).  For general help on OpenLDAP please take a look at our [knowledge base](https://kb.symas.com/), or go to the [OpenLDAP site](https://openldap.org/) and read the [documentation](https://openldap.org/doc/), the [quick start guide](https://openldap.org/doc/admin26/quickstart.html), and the detailed [manual pages](https://openldap.org/software/man.cgi).  [What we publish](https://repo.symas.com) is what we provide to you in this format to help you adopt and use OpenLDAP.  As always, everything is open-source.
+
+If you need help, please contact us at: +1.650.963.7601 or email [sales](mailto:sales@symas.com) or send mail to our [support](mailto:support@symas.com) teams directly with questions.  More on our support offerings can be [found on our website](https://www.symas.com/symas-tech-support).  We're also available on the Symas Discord [#openldap](https://discord.gg/t6upYQDx2) channel and chat with us directly.
+
+Reach out to us, we're here to help.
+
+
+## Why use our OpenLDAP chart?
+
+* Symas has, for over a decade, built, maintained, and commercially supported
+  the OpenLDAP codebase.
+* All our work on OpenLDAP has always been, and will always be open-source.  We
+  are a [commercial support company](mailto:support@symas.com), here if and when
+  you need us.
+* We commit to promptly publish new versions of this chart for every release of
+  the software going forward.
+* Our images contain the latest bug fixes and features released, not just in OpenLDAP
+  but in supporting libraries.
+* We've based our chart on the existing [jp-gouin](https://github.com/jp-gouin/helm-openldap)
+  chart that uses the [Bitnami containers](https://github.com/bitnami/containers/)
+  having recently changed from the abandoned Osixia OpenLDAP containers.
+* We'd like to thank [JP Gouin](https://github.com/jp-gouin) for open sourcing their
+  work allowing the community to benefit.  Our shared philosophy makes us stronger.
+
+
+## Why not just contribute to JP Gouin's exiting chart?
+
+We may eventually merge our work into his, for now we'd like to remain on a fork
+we provide and support that is under our control.
+
+Fundamentally, we're a company that supports OpenLDAP as our primary business
+model so it is important for us to own and support OpenLDAP on Kubernetes using
+Helm for deployment.
+
+- Replication is setup by configuration. Extra schemas are loaded using `LDAP_EXTRA_SCHEMAS: "cosine,inetorgperson,nis,syncprov,serverid,csyncprov,rep,bsyncprov,brep,acls`. You can add your own schemas via the `customSchemaFiles` option.
+
+A default tree (root organisation, users and group) is created during startup, this can be skipped using `LDAP_SKIP_DEFAULT_TREE`, however you need to use `customLdifFiles` or `customLdifCm` to create a root organisation.
+
+
+## Prerequisites Details
+
+* Kubernetes 1.8+
+* Persistent Volume (PV) support on the underlying infrastructure
+
+## Chart Details
+
+This chart will do the following:
+
+* Create 3 instances of OpenLDAP server with multi-master replication
+* Install and configure a single pod running phpldapadmin, an admin web-GUI for OpenLDAP
+* Install and configure ltb-passwd for self-service password
 
 
 ## Configuration
 
-We use the container images provided by https://github.com/bitnami/containers/tree/main/bitnami/openldap. The container image is highly configurable and well documented. Please consult to documentation of the image for more information.
+We use the [Symas provided container image](https://github.com/symas/containers/tree/main/openldap) forked from, and compatible with, the [Bitnami OpenLDAP container](https://github.com/bitnami/containers/tree/main/bitnami/openldap). Please consult to documentation of the image for more information.
 
 The following table lists the configurable parameters of the openldap chart and their default values.
 
@@ -75,7 +109,7 @@ Parameters related to the configuration of the application.
 | `users`          | User list to create (comma separated list) , can't be use with customLdifFiles | "" |
 | `userPasswords`          | User password to create (comma seprated list)  | "" |
 | `group`          | Group to create and add list of user above | "" |
-| `env`                              | List of key value pairs as env variables to be sent to the docker image. See https://github.com/bitnami/containers/tree/main/bitnami/openldap for available ones | `[see values.yaml]` |
+| `env`                              | List of key value pairs as env variables to be sent to the docker image. See https://github.com/symas/containers/tree/main/openldap for available ones | `[see values.yaml]` |
 | `customTLS.enabled`                      | Set to enable TLS/LDAPS with custom certificate - should also set `tls.secret`                                                                                    | `false`             |
 | `customTLS.secret`                       | Secret containing TLS cert and key must contain the keys tls.key , tls.crt and ca.crt                                                                       | `""`                |
 | `customSchemaFiles` | Custom openldap schema files used in addition to default schemas                                                                    | `""`                |
@@ -177,7 +211,8 @@ $ helm install --name my-release -f values.yaml stable/openldap
 
 
 ## PhpLdapAdmin
-To enable PhpLdapAdmin set `phpldapadmin.enabled`  to `true`
+
+To enable [PhpLdapAdmin](https://github.com/leenooks/phpLDAPadmin) set `phpldapadmin.enabled`  to `true`
 
 Ingress can be configure if you want to expose the service.
 Setup the env part of the configuration to access the OpenLdap server
@@ -265,24 +300,7 @@ All internal configuration like `cn=config` , `cn=module{0},cn=config` cannot be
 
 ## Changelog/Updating
 
-### To 4.0.0
+### To 1.0.0
 
-This major update switch the base image from [Osixia](https://github.com/osixia/docker-openldap) to [Bitnami Openldap](https://github.com/bitnami/containers/tree/main/bitnami/openldap)
+The Symas fork of the [jp-gouin](https://github.com/jp-gouin/helm-openldap) Helm chart so as to use our containers and provide commercial support.
 
-- Upgrade may not work fine between `3.x` and `4.x`
-- Ldap and Ldaps port are non privileged ports (`1389` and `1636`)
-- Replication is now purely setup by configuration
-- Extra schema cannot be added/modified
-
-A default tree (Root organisation, users and group) is created during startup, this can be skipped using `LDAP_SKIP_DEFAULT_TREE` , however you need to use `customLdifFiles` or `customLdifCm` to create a root organisation.
-
-- This will be improved in a future update.
-
-### To 3.0.0
-
-This major update of the chart enable new feature for the deployment such as :
-
-- supporting initcontainer
-- supporting sidecar
-- use global parameters to ease the configuration of the app
-- out of the box integration with phpldapadmin and self-service password in a secure way
