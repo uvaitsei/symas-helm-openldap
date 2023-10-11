@@ -248,4 +248,3 @@ customAcls: |-
 ```
 
 Putting all together, the user ```foo``` can now login on phpldapadmin with only *foo* as username and his password, and with full permissions to manage the ldap database.
-

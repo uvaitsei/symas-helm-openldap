@@ -1,5 +1,24 @@
 apiVersion: v2
 name: openldap-stack-ha
+home: https://www.openldap.org
+version: 4.1.1
+appVersion: 2.6.6
+description: OpenLDAP directory server, with support from Symas Corp.
+icon: https://raw.githubusercontent.com/symas/helm-openldap/master/logo.png
+keywords:
+  - directory
+  - high availability
+  - iam-stack
+  - ldap
+  - openldap
+  - symas
+sources:
+  - https://github.com/symas/helm-openldap
+maintainers:
+  - name: Symas Corp.
+    email: support@symas.com
+  - name: Gregory Burd
+    email: gburd@symas.com
 dependencies:
   - name: ltb-passwd
     version: 0.1.x
@@ -12,19 +31,4 @@ dependencies:
     tags:
       - bitnami-common
     version: 1.x.x
-home: https://www.openldap.org
-version: 4.1.1
-appVersion: 2.6.3
-description: Community developed LDAP software
-icon: https://raw.githubusercontent.com/jp-gouin/helm-openldap/master/logo.png
-keywords:
-  - ldap
-  - openldap
-  - iam-stack
-  - high availability
-sources:
-  - https://github.com/jp-gouin/helm-openldap
-maintainers:
-  - name: Jean-Philippe Gouin
-    email: jp-gouin@hotmail.fr
 engine: gotpl

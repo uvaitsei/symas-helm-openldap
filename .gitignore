@@ -1,3 +1,4 @@
 myValues.yaml
 ignore/*
 ignore
+.DS_Store

@@ -54,4 +54,6 @@ You can access Self Service Password, using
 Test server health using Helm test:
   helm test {{ .Release.Name }}
 
+Support available from Symas, email support@symas.com or file a bug against this repository.
+
 Enjoy :)

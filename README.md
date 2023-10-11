@@ -43,36 +43,35 @@ Reach out to us, we're here to help.
 * We've based our chart on the existing [jp-gouin](https://github.com/jp-gouin/helm-openldap)
   chart that uses the [Bitnami containers](https://github.com/bitnami/containers/)
   having recently changed from the abandoned Osixia OpenLDAP containers.
-* We'd like to thank [JP Gouin](https://github.com/jp-gouin) for open sourcing their
-  work allowing the community to benefit.  Our shared philosophy makes us stronger.
+* We'd like to thank [Jean-Philippe Gouin](https://github.com/jp-gouin) for open sourcing his work allowing the community to benefit.  Our shared philosophy makes us stronger.
 
 
-## Why not just contribute to JP Gouin's exiting chart?
+## Why not just contribute to Jean-Philippe's exiting chart?
 
 We may eventually merge our work into his, for now we'd like to remain on a fork
-we provide and support that is under our control.
+that we provide and support for our customers that is under our direct control.
 
 Fundamentally, we're a company that supports OpenLDAP as our primary business
-model so it is important for us to own and support OpenLDAP on Kubernetes using
-Helm for deployment.
+model so it is important for us to own this Helm chart allowing for easy deployent
+of OpenLDAP within Kubernetes clusters.
 
 - Replication is setup by configuration. Extra schemas are loaded using `LDAP_EXTRA_SCHEMAS: "cosine,inetorgperson,nis,syncprov,serverid,csyncprov,rep,bsyncprov,brep,acls`. You can add your own schemas via the `customSchemaFiles` option.
 
-A default tree (root organisation, users and group) is created during startup, this can be skipped using `LDAP_SKIP_DEFAULT_TREE`, however you need to use `customLdifFiles` or `customLdifCm` to create a root organisation.
+A default tree (Root Organization, users and group) is created during startup, this can be skipped using `LDAP_SKIP_DEFAULT_TREE`, however you need to use `customLdifFiles` or `customLdifCm` to create a root organization.
 
 
-## Prerequisites Details
+## Prerequisites
 
 * Kubernetes 1.8+
 * Persistent Volume (PV) support on the underlying infrastructure
 
-## Chart Details
+## Chart Details:
 
-This chart will do the following:
+This chart will:
 
-* Create 3 instances of OpenLDAP server with multi-master replication
-* Install and configure a single pod running phpldapadmin, an admin web-GUI for OpenLDAP
-* Install and configure ltb-passwd for self-service password
+* Create 3 instances of OpenLDAP server with multi-master replication.
+* Install and configure a single pod running [phpldapadmin](https://github.com/leenooks/phpLDAPadmin) using the [Osixia container](https://github.com/osixia/docker-phpLDAPadmin), an admin web-GUI for OpenLDAP.
+* Install and configure [ltb-passwd](https://ltb-project.org/documentation/self-service-password.html) using the [Tired of It container](https://github.com/tiredofit/docker-self-service-password) for self-service password changes.
 
 
 ## Configuration

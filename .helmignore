@@ -3,5 +3,6 @@
 .chaos
 .argo-workflow
 .bin
+.DS_Store
 advanced_examples
 

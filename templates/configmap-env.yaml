@@ -1,7 +1,7 @@
 #
 # A ConfigMap spec for openldap slapd that map directly to env variables in the Pod.
 # List of environment variables supported is from the docker image:
-# https://hub.docker.com/r/bitnami/openldap/
+# https://hub.docker.com/r/symas/openldap/
 # Note that passwords are defined as secrets
 #
 apiVersion: v1

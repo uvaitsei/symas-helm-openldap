@@ -204,7 +204,7 @@ spec:
           {{- end }}
           volumeMounts:
             - name: data
-              mountPath: /bitnami/openldap/
+              mountPath: /openldap/
             - name: certs
               mountPath: /opt/bitnami/openldap/certs
             {{- range $file := (include "openldap.builtinSchemaFiles" . | split ",") }}
