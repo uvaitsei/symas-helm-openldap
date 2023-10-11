@@ -1,5 +1,5 @@
 [![build](https://github.com/symas/helm-openldap/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/symas/helm-openldap/actions/workflows/ci.yml)
-[![Artifact HUB](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/helm-openldap)](https://artifacthub.io/packages/search?repo=helm-openldap)
+[![Artifact HUB](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/symas-openldap)](https://artifacthub.io/packages/search?repo=symas-openldap)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/apache/apisix/blob/master/LICENSE)
 ![Version](https://img.shields.io/static/v1?label=Openldap&message=2.6.3&color=blue)
 
