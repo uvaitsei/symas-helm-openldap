@@ -1,5 +1,5 @@
 # Artifact Hub repository metadata file
-repositoryID: 
-owners: # (optional, used to claim repository ownership)
+repositoryID: 094d27b7-e959-4b70-b891-4925a4c84e60
+owners:
   - name: symas
     email: support@symas.com
