@@ -5,4 +5,5 @@
 .bin
 .DS_Store
 advanced_examples
+shell.nix
 
