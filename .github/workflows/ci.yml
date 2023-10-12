@@ -15,74 +15,104 @@ jobs:
   qualif:
       runs-on: ubuntu-latest
       steps:
-      - uses: azure/setup-helm@v3
-      - name: Check out code
-        uses: actions/checkout@v1
-      - name: Lint
-        shell: bash
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.12.1
+
+
+      - name: Set up chart-testing
+        uses: helm/chart-testing-action@v2.4.0
+
+      - name: Run chart-testing (list-changed)
+        id: list-changed
         run: |
-          helm lint .
-      - name: setup kind (kubernetes) cluster
-        uses: helm/kind-action@v1.5.0
-        config: $GITHUB_WORKSPACE/.bin/kind-conf.yml
-        node_image: kindest/node:v1.28.0@sha256:9f3ff58f19dcf1a0611d11e8ac989fdb30a28f40f236f59f0bea31fb956ccf5c
+          changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }})
+          if [[ -n "$changed" ]]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run chart-testing (lint)
+        if: steps.list-changed.outputs.changed == 'true'
+        run: ct lint --target-branch ${{ github.event.repository.default_branch }}
+
+      - name: Create kind cluster
+        if: steps.list-changed.outputs.changed == 'true'
+        uses: helm/kind-action@v1.7.0
+
+      - name: Run chart-testing (install)
+        if: steps.list-changed.outputs.changed == 'true'
+        run: ct install --target-branch ${{ github.event.repository.default_branch }}
+
       - name: Set KUBE_CONFIG env from kind
         run: echo "KUBE_CONFIG=$(kind get kubeconfig-path)" >> $GITHUB_ENV
-      - name: pods
-        uses: actions-hub/kubectl@master
-        with:
-          args: get pods
+
       - name: install project contour
         uses: actions-hub/kubectl@master
         with:
           args: apply -f https://projectcontour.io/quickstart/contour.yaml
+
       - name: patch contour daemonsets
         uses: actions-hub/kubectl@master
         with:
           args: patch daemonsets -n projectcontour envoy -p '{"spec":{"template":{"spec":{"nodeSelector":{"ingress-ready":"true"}}}}}'
+
       - name: setup chaos mesh
         shell: bash
         run: |
           curl -sSL https://mirrors.chaos-mesh.org/v2.6.2/install.sh  | bash -s -- --local kind
+
       - name: setup certs
         shell: bash
         run: |
           openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN=example.com' -keyout tls.key -out tls.crt -days 365
           cp tls.crt ca.crt
           kubectl create secret generic custom-cert --from-file=./tls.crt --from-file=./tls.key --from-file=./ca.crt
+
       - name: deploy symas openldap
         shell: bash
         run: |
           cd "$GITHUB_WORKSPACE"
           helm install openldap -f .bin/myval.yaml .
           kubectl rollout status sts openldap
+
       - name: verify deployment
         shell: bash
         run: |
            echo "test access to openldap database"
            sudo apt-get install -y ldap-utils
            LDAPTLS_REQCERT=never ldapsearch -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org'
+
       - name: test phpldapadmin access
         shell: bash
         run: |
            echo "test access to phpldapadmin"
            echo "127.0.0.1 phpldapadmin.example ssl-ldap2.example" | sudo tee -a /etc/hosts
            curl phpldapadmin.example:8080
+
       - name: test self service pwd access
         shell: bash
         run: |
            echo "test access to ssp"
            curl ssl-ldap2.example:8080
+
       - name: verify certs
         shell: bash
         run: |
            echo "verify certificate"
            openssl s_client -showcerts -connect localhost:30636 </dev/null | grep "issuer=CN = example.com"
+
       - name: apply chaos tests
         shell: bash
         run: |
            echo "test access to openldap database"
            kubectl apply -f .bin/chaos.yaml
+
       - name: test write
         shell: bash
         run: |
@@ -91,11 +121,13 @@ jobs:
            LDAPTLS_REQCERT=never ldapsearch -o nettimeout=20 -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org' > /tmp/test-write.txt
            if [ $(grep "numResponses" /tmp/test-write.txt | cut -d ":" -f 2 | tr -d ' ') -ne 5 ]; then exit 1 ; fi
            if ! grep -q "objectClass: ownCloud" /tmp/test-write.txt; then  echo exit 1; fi
+
       - name: chaos tests
         shell: bash
         run: |
            echo "test access to openldap database"
            for i in {1..20}; do  LDAPTLS_REQCERT=never ldapsearch -o nettimeout=20 -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org' && sleep 60 ; done
+
       - name: deploy openldap-single-node
         shell: bash
         run: |
@@ -103,6 +135,7 @@ jobs:
           cd "$GITHUB_WORKSPACE"
           helm install openldap -n single --create-namespace -f .bin/singleNode.yaml .
           kubectl rollout status sts openldap -n single
+
       - name: verify single node deployment
         shell: bash
         run: |
