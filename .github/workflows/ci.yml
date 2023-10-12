@@ -6,123 +6,69 @@ on:
   pull_request:
     branches:
       - "master"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
-
+      - "bitnami"
 jobs:
   qualif:
       runs-on: ubuntu-latest
       steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Set up Helm
-        uses: azure/setup-helm@v3
-        with:
-          version: v3.12.1
-
-
-      - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.4.0
-
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-          check-latest: true
-
-      - name: Run chart-testing (list-changed)
-        id: list-changed
-        run: |
-          changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }})
-          if [[ -n "$changed" ]]; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          fi
-          echo "changed=true" >> "$GITHUB_OUTPUT"
-
-      - name: Run chart-testing (lint)
-        if: steps.list-changed.outputs.changed == 'true'
-        run: ct lint --target-branch ${{ github.event.repository.default_branch }}
-
-      - name: Create kind cluster
-        if: steps.list-changed.outputs.changed == 'true'
-        uses: helm/kind-action@v1.7.0
-
-      - name: Run chart-testing (install)
-        if: steps.list-changed.outputs.changed == 'true'
-        run: ct install --target-branch ${{ github.event.repository.default_branch }}
-
-      - name: install project contour
-        if: steps.list-changed.outputs.changed == 'true'
+      - name: Check out code
+        uses: actions/checkout@v1
+      - name: Lint
         shell: bash
         run: |
+          helm lint .
+      - name: setup cluster
+        shell: bash
+        run: |
+          curl -Lo /tmp/kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
+          chmod +x /tmp/kind
+          /tmp/kind create cluster --config=$GITHUB_WORKSPACE/.bin/kind-conf.yml --image=kindest/node:v1.28.0@sha256:9f3ff58f19dcf1a0611d11e8ac989fdb30a28f40f236f59f0bea31fb956ccf5c
           kubectl apply -f https://projectcontour.io/quickstart/contour.yaml
           kubectl patch daemonsets -n projectcontour envoy -p '{"spec":{"template":{"spec":{"nodeSelector":{"ingress-ready":"true"}}}}}'
-
       - name: setup chaos mesh
-        if: steps.list-changed.outputs.changed == 'true'
         shell: bash
         run: |
           curl -sSL https://mirrors.chaos-mesh.org/v2.6.2/install.sh  | bash -s -- --local kind
-
       - name: setup certs
-        if: steps.list-changed.outputs.changed == 'true'
         shell: bash
         run: |
           openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN=example.com' -keyout tls.key -out tls.crt -days 365
           cp tls.crt ca.crt
           kubectl create secret generic custom-cert --from-file=./tls.crt --from-file=./tls.key --from-file=./ca.crt
-
-      - name: deploy symas openldap
-        if: steps.list-changed.outputs.changed == 'true'
+      - name: deploy openldap-stack-ha
         shell: bash
         run: |
           cd "$GITHUB_WORKSPACE"
-          helm install openldap -f .bin/myval.yaml .
-          kubectl rollout status sts openldap
-
+          helm install openldap-stack-ha -f .bin/myval.yaml .
+          kubectl rollout status sts openldap-stack-ha 
       - name: verify deployment
-        if: steps.list-changed.outputs.changed == 'true'
         shell: bash
         run: |
            echo "test access to openldap database"
            sudo apt-get install -y ldap-utils
            LDAPTLS_REQCERT=never ldapsearch -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org'
-
       - name: test phpldapadmin access
-        if: steps.list-changed.outputs.changed == 'true'
         shell: bash
         run: |
            echo "test access to phpldapadmin"
            echo "127.0.0.1 phpldapadmin.example ssl-ldap2.example" | sudo tee -a /etc/hosts
            curl phpldapadmin.example:8080
-
       - name: test self service pwd access
-        if: steps.list-changed.outputs.changed == 'true'
         shell: bash
         run: |
            echo "test access to ssp"
            curl ssl-ldap2.example:8080
-
       - name: verify certs
-        if: steps.list-changed.outputs.changed == 'true'
         shell: bash
         run: |
            echo "verify certificate"
            openssl s_client -showcerts -connect localhost:30636 </dev/null | grep "issuer=CN = example.com"
-
       - name: apply chaos tests
-        if: steps.list-changed.outputs.changed == 'true'
         shell: bash
         run: |
            echo "test access to openldap database"
            kubectl apply -f .bin/chaos.yaml
-
       - name: test write
-        if: steps.list-changed.outputs.changed == 'true'
         shell: bash
         run: |
            echo "test access to openldap database"
@@ -130,25 +76,19 @@ jobs:
            LDAPTLS_REQCERT=never ldapsearch -o nettimeout=20 -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org' > /tmp/test-write.txt
            if [ $(grep "numResponses" /tmp/test-write.txt | cut -d ":" -f 2 | tr -d ' ') -ne 5 ]; then exit 1 ; fi
            if ! grep -q "objectClass: ownCloud" /tmp/test-write.txt; then  echo exit 1; fi
-
       - name: chaos tests
-        if: steps.list-changed.outputs.changed == 'true'
         shell: bash
         run: |
            echo "test access to openldap database"
            for i in {1..20}; do  LDAPTLS_REQCERT=never ldapsearch -o nettimeout=20 -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org' && sleep 60 ; done
-
-      - name: deploy openldap-single-node
-        if: steps.list-changed.outputs.changed == 'true'
+      - name: deploy openldap-stack-ha-single-node
         shell: bash
         run: |
-          helm delete openldap
+          helm delete openldap-stack-ha
           cd "$GITHUB_WORKSPACE"
-          helm install openldap -n single --create-namespace -f .bin/singleNode.yaml .
-          kubectl rollout status sts openldap -n single
-
+          helm install openldap-stack-ha -n single --create-namespace -f .bin/singleNode.yaml .
+          kubectl rollout status sts openldap-stack-ha -n single
       - name: verify single node deployment
-        if: steps.list-changed.outputs.changed == 'true'
         shell: bash
         run: |
            echo "test access to openldap database"
@@ -156,3 +96,5 @@ jobs:
            LDAPTLS_REQCERT=never ldapsearch -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org' > /tmp/test-single-node.txt
            cat /tmp/test-single-node.txt
            if [ $(grep "numResponses" /tmp/test-single-node.txt | cut -d ":" -f 2 | tr -d ' ') -ne 6 ]; then exit 1 ; fi
+
+
