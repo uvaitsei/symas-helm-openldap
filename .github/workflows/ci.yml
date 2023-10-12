@@ -24,8 +24,7 @@ jobs:
           helm lint .
       - name: setup kind (kubernetes) cluster
         uses: helm/kind-action@v1.5.0
-        version: v0.20.0
-        kubeconfig: $GITHUB_WORKSPACE/.bin/kind-conf.yml
+        config: $GITHUB_WORKSPACE/.bin/kind-conf.yml
         node_image: kindest/node:v1.28.0@sha256:9f3ff58f19dcf1a0611d11e8ac989fdb30a28f40f236f59f0bea31fb956ccf5c
       - name: Set KUBE_CONFIG env from kind
         run: echo "KUBE_CONFIG=$(kind get kubeconfig-path)" >> $GITHUB_ENV
