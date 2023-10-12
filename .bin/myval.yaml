@@ -64,7 +64,6 @@ customLdifFiles:
     homedirectory: /home/users/jdupond
     objectclass: inetOrgPerson
     objectclass: posixAccount
-    objectClass: ownCloud
     objectclass: top
     sn: Dupond
     uid: jdupond
