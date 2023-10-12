@@ -73,6 +73,12 @@ This chart will:
 * Install and configure a single pod running [phpldapadmin](https://github.com/leenooks/phpLDAPadmin) using the [Osixia container](https://github.com/osixia/docker-phpLDAPadmin), an admin web-GUI for OpenLDAP.
 * Install and configure [ltb-passwd](https://ltb-project.org/documentation/self-service-password.html) using the [Tired of It container](https://github.com/tiredofit/docker-self-service-password) for self-service password changes.
 
+## Symas Packaged OpenLDAP
+
+We, at Symas, contribute to and maintain the [OpenLDAP software](https://openldap.org) as open source software.  We work within the community of contributors to this project, that's how open source works.  We don't sell licenses to the software, the software is free for anyone to use.  We do provide commercial support for OpenLDAP, and in that capacity we've run across bugs that others may not have encountered.  We fix those issues and contribute them back to OpenLDAP through the community process.  Sometimes we find bugs impacting OpenLDAP in supporting libraries, and in those cases we fix those issues and offer them to the package maintainers.  When that process isn't fast enough, we apply our fixes to a fork of the package and include that within our package of OpenLDAP.  When that fix is upstreamed and released, we return to using the community provided library.  All that is to say that it is possible that the Symas supplied packages include fixes that are not available in other builds of OpenLDAP unless those builds included our forks of those dependencies.
+
+In addition, Symas sometimes includes packages or configuration by default that we've found useful to our customers.  For instances, this Helm chart includes lib-passwd which is a web-based self-service password management application developed by the Linux toolbox Project. It has some nice features useful when administering OpenLDAP. Ppm is a password complexity module for OpenLDAP, it also comes password management features, but the only overlap between Ppm and lib-passwd is that they both can enforce password complexity rules, albeit in different ways.  So, with this release of OpenLDAP you get the best of both worlds.
+
 
 ## Configuration
 
