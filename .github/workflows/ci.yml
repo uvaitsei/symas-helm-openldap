@@ -41,6 +41,7 @@ jobs:
           if [[ -n "$changed" ]]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
+          echo "changed=true" >> "$GITHUB_OUTPUT"
 
       - name: Run chart-testing (lint)
         if: steps.list-changed.outputs.changed == 'true'
@@ -68,6 +69,7 @@ jobs:
           args: apply -f https://projectcontour.io/quickstart/contour.yaml
 
       - name: patch contour daemonsets
+        if: steps.list-changed.outputs.changed == 'true'
         uses: actions-hub/kubectl@master
         env:
           KUBE_CONFIG: ${{ steps.kube-config.output.KUBE_CONFIG }}
@@ -75,11 +77,13 @@ jobs:
           args: patch daemonsets -n projectcontour envoy -p '{"spec":{"template":{"spec":{"nodeSelector":{"ingress-ready":"true"}}}}}'
 
       - name: setup chaos mesh
+        if: steps.list-changed.outputs.changed == 'true'
         shell: bash
         run: |
           curl -sSL https://mirrors.chaos-mesh.org/v2.6.2/install.sh  | bash -s -- --local kind
 
       - name: setup certs
+        if: steps.list-changed.outputs.changed == 'true'
         shell: bash
         run: |
           openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN=example.com' -keyout tls.key -out tls.crt -days 365
@@ -87,6 +91,7 @@ jobs:
           kubectl create secret generic custom-cert --from-file=./tls.crt --from-file=./tls.key --from-file=./ca.crt
 
       - name: deploy symas openldap
+        if: steps.list-changed.outputs.changed == 'true'
         shell: bash
         run: |
           cd "$GITHUB_WORKSPACE"
@@ -94,6 +99,7 @@ jobs:
           kubectl rollout status sts openldap
 
       - name: verify deployment
+        if: steps.list-changed.outputs.changed == 'true'
         shell: bash
         run: |
            echo "test access to openldap database"
@@ -101,6 +107,7 @@ jobs:
            LDAPTLS_REQCERT=never ldapsearch -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org'
 
       - name: test phpldapadmin access
+        if: steps.list-changed.outputs.changed == 'true'
         shell: bash
         run: |
            echo "test access to phpldapadmin"
@@ -108,24 +115,28 @@ jobs:
            curl phpldapadmin.example:8080
 
       - name: test self service pwd access
+        if: steps.list-changed.outputs.changed == 'true'
         shell: bash
         run: |
            echo "test access to ssp"
            curl ssl-ldap2.example:8080
 
       - name: verify certs
+        if: steps.list-changed.outputs.changed == 'true'
         shell: bash
         run: |
            echo "verify certificate"
            openssl s_client -showcerts -connect localhost:30636 </dev/null | grep "issuer=CN = example.com"
 
       - name: apply chaos tests
+        if: steps.list-changed.outputs.changed == 'true'
         shell: bash
         run: |
            echo "test access to openldap database"
            kubectl apply -f .bin/chaos.yaml
 
       - name: test write
+        if: steps.list-changed.outputs.changed == 'true'
         shell: bash
         run: |
            echo "test access to openldap database"
@@ -135,12 +146,14 @@ jobs:
            if ! grep -q "objectClass: ownCloud" /tmp/test-write.txt; then  echo exit 1; fi
 
       - name: chaos tests
+        if: steps.list-changed.outputs.changed == 'true'
         shell: bash
         run: |
            echo "test access to openldap database"
            for i in {1..20}; do  LDAPTLS_REQCERT=never ldapsearch -o nettimeout=20 -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org' && sleep 60 ; done
 
       - name: deploy openldap-single-node
+        if: steps.list-changed.outputs.changed == 'true'
         shell: bash
         run: |
           helm delete openldap
@@ -149,6 +162,7 @@ jobs:
           kubectl rollout status sts openldap -n single
 
       - name: verify single node deployment
+        if: steps.list-changed.outputs.changed == 'true'
         shell: bash
         run: |
            echo "test access to openldap database"
