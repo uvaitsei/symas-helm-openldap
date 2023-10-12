@@ -33,7 +33,7 @@ jobs:
         with:
           python-version: '3.9'
           check-latest: true
-	  
+
       - name: Run chart-testing (list-changed)
         id: list-changed
         run: |
@@ -56,21 +56,21 @@ jobs:
 
       - name: Set KUBE_CONFIG env from kind
         if: steps.list-changed.outputs.changed == 'true'
-	id: kube-config
+        id: kube-config
         run: echo "KUBE_CONFIG=$(kind get kubeconfig-path)" >> $GITHUB_ENV
 
       - name: install project contour
         if: steps.list-changed.outputs.changed == 'true'
         uses: actions-hub/kubectl@master        
         env:
-	  KUBE_CONFIG: ${{ steps.kube-config.output.KUBE_CONFIG }}
-	with:
+          KUBE_CONFIG: ${{ steps.kube-config.output.KUBE_CONFIG }}
+        with:
           args: apply -f https://projectcontour.io/quickstart/contour.yaml
 
       - name: patch contour daemonsets
         uses: actions-hub/kubectl@master
         env:
-	  KUBE_CONFIG: ${{ steps.kube-config.output.KUBE_CONFIG }}
+          KUBE_CONFIG: ${{ steps.kube-config.output.KUBE_CONFIG }}
         with:
           args: patch daemonsets -n projectcontour envoy -p '{"spec":{"template":{"spec":{"nodeSelector":{"ingress-ready":"true"}}}}}'
 
