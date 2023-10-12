@@ -7,24 +7,40 @@ on:
     branches:
       - "master"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   qualif:
       runs-on: ubuntu-latest
       steps:
+      - uses: azure/setup-helm@v3
       - name: Check out code
         uses: actions/checkout@v1
       - name: Lint
         shell: bash
         run: |
           helm lint .
-      - name: setup cluster
-        shell: bash
-        run: |
-          curl -Lo /tmp/kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
-          chmod +x /tmp/kind
-          /tmp/kind create cluster --config=$GITHUB_WORKSPACE/.bin/kind-conf.yml --image=kindest/node:v1.28.0@sha256:9f3ff58f19dcf1a0611d11e8ac989fdb30a28f40f236f59f0bea31fb956ccf5c
-          kubectl apply -f https://projectcontour.io/quickstart/contour.yaml
-          kubectl patch daemonsets -n projectcontour envoy -p '{"spec":{"template":{"spec":{"nodeSelector":{"ingress-ready":"true"}}}}}'
+      - name: setup kind (kubernetes) cluster
+        uses: helm/kind-action@v1.5.0
+        version: v0.20.0
+        kubeconfig: $GITHUB_WORKSPACE/.bin/kind-conf.yml
+        node_image: kindest/node:v1.28.0@sha256:9f3ff58f19dcf1a0611d11e8ac989fdb30a28f40f236f59f0bea31fb956ccf5c
+      - name: Set KUBE_CONFIG env from kind
+        run: echo "KUBE_CONFIG=$(kind get kubeconfig-path)" >> $GITHUB_ENV
+      - name: pods
+        uses: actions-hub/kubectl@master
+        with:
+          args: get pods
+      - name: install project contour
+        uses: actions-hub/kubectl@master
+        with:
+          args: apply -f https://projectcontour.io/quickstart/contour.yaml
+      - name: patch contour daemonsets
+        uses: actions-hub/kubectl@master
+        with:
+          args: patch daemonsets -n projectcontour envoy -p '{"spec":{"template":{"spec":{"nodeSelector":{"ingress-ready":"true"}}}}}'
       - name: setup chaos mesh
         shell: bash
         run: |
@@ -35,12 +51,12 @@ jobs:
           openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN=example.com' -keyout tls.key -out tls.crt -days 365
           cp tls.crt ca.crt
           kubectl create secret generic custom-cert --from-file=./tls.crt --from-file=./tls.key --from-file=./ca.crt
-      - name: deploy openldap-stack-ha
+      - name: deploy symas openldap
         shell: bash
         run: |
           cd "$GITHUB_WORKSPACE"
-          helm install openldap-stack-ha -f .bin/myval.yaml .
-          kubectl rollout status sts openldap-stack-ha 
+          helm install openldap -f .bin/myval.yaml .
+          kubectl rollout status sts openldap
       - name: verify deployment
         shell: bash
         run: |
@@ -81,13 +97,13 @@ jobs:
         run: |
            echo "test access to openldap database"
            for i in {1..20}; do  LDAPTLS_REQCERT=never ldapsearch -o nettimeout=20 -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org' && sleep 60 ; done
-      - name: deploy openldap-stack-ha-single-node
+      - name: deploy openldap-single-node
         shell: bash
         run: |
-          helm delete openldap-stack-ha
+          helm delete openldap
           cd "$GITHUB_WORKSPACE"
-          helm install openldap-stack-ha -n single --create-namespace -f .bin/singleNode.yaml .
-          kubectl rollout status sts openldap-stack-ha -n single
+          helm install openldap -n single --create-namespace -f .bin/singleNode.yaml .
+          kubectl rollout status sts openldap -n single
       - name: verify single node deployment
         shell: bash
         run: |
