@@ -29,6 +29,11 @@ jobs:
       - name: Set up chart-testing
         uses: helm/chart-testing-action@v2.4.0
 
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          check-latest: true
+	  
       - name: Run chart-testing (list-changed)
         id: list-changed
         run: |
@@ -50,15 +55,22 @@ jobs:
         run: ct install --target-branch ${{ github.event.repository.default_branch }}
 
       - name: Set KUBE_CONFIG env from kind
+        if: steps.list-changed.outputs.changed == 'true'
+	id: kube-config
         run: echo "KUBE_CONFIG=$(kind get kubeconfig-path)" >> $GITHUB_ENV
 
       - name: install project contour
-        uses: actions-hub/kubectl@master
-        with:
+        if: steps.list-changed.outputs.changed == 'true'
+        uses: actions-hub/kubectl@master        
+        env:
+	  KUBE_CONFIG: ${{ steps.kube-config.output.KUBE_CONFIG }}
+	with:
           args: apply -f https://projectcontour.io/quickstart/contour.yaml
 
       - name: patch contour daemonsets
         uses: actions-hub/kubectl@master
+        env:
+	  KUBE_CONFIG: ${{ steps.kube-config.output.KUBE_CONFIG }}
         with:
           args: patch daemonsets -n projectcontour envoy -p '{"spec":{"template":{"spec":{"nodeSelector":{"ingress-ready":"true"}}}}}'
 
