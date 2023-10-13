@@ -3,7 +3,44 @@ entries:
   openldap:
   - apiVersion: v2
     appVersion: 2.6.6
-    created: "2023-10-12T15:03:42.659073068Z"
+    created: "2023-10-13T20:07:32.031381835Z"
+    dependencies:
+    - condition: ltb-passwd.enabled
+      name: ltb-passwd
+      repository: ""
+      version: 0.1.x
+    - condition: phpldapadmin.enabled
+      name: phpldapadmin
+      repository: ""
+      version: 0.1.x
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    description: OpenLDAP directory server, with support from Symas Corp.
+    digest: cf102a9c893b6d2003b0295b287902adca993f57a7e8478e8b39aa3f68cd8ef2
+    home: https://www.openldap.org
+    icon: https://raw.githubusercontent.com/symas/helm-openldap/master/logo.png
+    keywords:
+    - ldap
+    - openldap
+    - iam-stack
+    - high availability
+    maintainers:
+    - email: support@symas.com
+      name: Symas Corp.
+    - email: gburd@symas.com
+      name: Gregory Burd
+    name: openldap
+    sources:
+    - https://github.com/symas/helm-openldap
+    urls:
+    - openldap-1.0.2.tgz
+    version: 1.0.2
+  - apiVersion: v2
+    appVersion: 2.6.6
+    created: "2023-10-13T20:07:32.027063508Z"
     dependencies:
     - condition: ltb-passwd.enabled
       name: ltb-passwd
@@ -38,4 +75,4 @@ entries:
     urls:
     - openldap-1.0.1.tgz
     version: 1.0.1
-generated: "2023-10-12T15:03:42.653840609Z"
+generated: "2023-10-13T20:07:32.022875483Z"
