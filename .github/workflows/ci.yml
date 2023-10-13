@@ -28,7 +28,7 @@ jobs:
       - name: setup chaos mesh
         shell: bash
         run: |
-          curl -sSL https://mirrors.chaos-mesh.org/v2.6.2/install.sh  | bash -s -- --local kind
+          curl -sSL https://mirrors.chaos-mesh.org/v2.6.2/install.sh  | env -i HOME=$(mktemp -d) bash --noprofile --norc -s -- --local kind
       - name: setup certs
         shell: bash
         run: |
@@ -39,7 +39,8 @@ jobs:
         shell: bash
         run: |
           cd "$GITHUB_WORKSPACE"
-          helm install openldap -f .bin/myval.yaml .
+          helm install --dry-run --debug openldap -f .bin/myval.yaml .
+          helm install --debug openldap -f .bin/myval.yaml .
           kubectl rollout status sts openldap 
       - name: verify deployment
         shell: bash
@@ -86,7 +87,7 @@ jobs:
         run: |
           helm delete openldap
           cd "$GITHUB_WORKSPACE"
-          helm install openldap -n single --create-namespace -f .bin/singleNode.yaml .
+          helm install --debug openldap -n single --create-namespace -f .bin/singleNode.yaml .
           kubectl rollout status sts openldap -n single
       - name: verify single node deployment
         shell: bash
@@ -96,5 +97,8 @@ jobs:
            LDAPTLS_REQCERT=never ldapsearch -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org' > /tmp/test-single-node.txt
            cat /tmp/test-single-node.txt
            if [ $(grep "numResponses" /tmp/test-single-node.txt | cut -d ":" -f 2 | tr -d ' ') -ne 6 ]; then exit 1 ; fi
-
+      - name: remove single node deployment
+        shell: bash
+        run: |
+          helm delete -n single openldap
 
