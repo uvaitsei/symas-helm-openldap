@@ -13,7 +13,7 @@ dependencies:
       - bitnami-common
     version: 1.x.x
 home: https://www.openldap.org
-version: 1.0.1
+version: 1.0.2
 appVersion: 2.6.6
 description: OpenLDAP directory server, with support from Symas Corp.
 icon: https://raw.githubusercontent.com/symas/helm-openldap/master/logo.png
