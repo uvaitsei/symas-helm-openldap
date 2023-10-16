@@ -215,7 +215,7 @@ spec:
 {{- if .Values.customSchemaFiles}}
             {{- range $file := (include "openldap.customSchemaFiles" . | split ",") }}
             - name: custom-schema-files
-              mountPath: /opt/bitnami/openldap/etc/schema/{{ $file }}.ldif
+              mountPath: /schemas/{{ $file }}.ldif
               subPath: {{ $file }}.ldif
             {{- end }}
 {{- end }}

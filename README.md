@@ -55,7 +55,7 @@ Fundamentally, we're a company that supports OpenLDAP as our primary business
 model so it is important for us to own this Helm chart allowing for easy deployent
 of OpenLDAP within Kubernetes clusters.
 
-- Replication is setup by configuration. Extra schemas are loaded using `LDAP_EXTRA_SCHEMAS: "cosine,inetorgperson,nis,syncprov,serverid,csyncprov,rep,bsyncprov,brep,acls`. You can add your own schemas via the `customSchemaFiles` option.
+- Replication is setup by configuration. Extra schemas are loaded using `LDAP_EXTRA_SCHEMAS: "cosine,inetorgperson,nis,syncprov,serverid,csyncprov,rep,bsyncprov,brep,acls`. You can add your own schemas to load during setup via the `customSchemaFiles` option.
 
 A default tree (Root Organization, users and group) is created during startup, this can be skipped using `LDAP_SKIP_DEFAULT_TREE`, however you need to use `customLdifFiles` or `customLdifCm` to create a root organization.
 

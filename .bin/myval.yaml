@@ -4,8 +4,10 @@ env:
 image:
   # From repository https://hub.docker.com/r/symas/openldap/
   repository: symas/openldap
-  tag: 2.6.6-debian-11-r4
-resources: 
+  tag: 2.6.6
+  pullPolicy: Always
+  pullSecrets: []
+resources:
   limits:
     cpu: "128m"
     memory: "64Mi"
@@ -68,6 +70,7 @@ customLdifFiles:
     homedirectory: /home/users/jdupond
     objectclass: inetOrgPerson
     objectclass: posixAccount
+    objectClass: ownCloud
     objectclass: top
     sn: Dupond
     uid: jdupond

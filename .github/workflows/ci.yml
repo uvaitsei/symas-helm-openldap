@@ -39,9 +39,9 @@ jobs:
         shell: bash
         run: |
           cd "$GITHUB_WORKSPACE"
-          helm install --dry-run --debug openldap -f .bin/myval.yaml .
-          helm install --debug openldap -f .bin/myval.yaml .
-          kubectl rollout status sts openldap 
+          #helm install --dry-run --debug openldap -f .bin/myval.yaml .
+          helm install openldap -f .bin/myval.yaml .
+          kubectl rollout status sts openldap
       - name: verify deployment
         shell: bash
         run: |
@@ -87,7 +87,7 @@ jobs:
         run: |
           helm delete openldap
           cd "$GITHUB_WORKSPACE"
-          helm install --debug openldap -n single --create-namespace -f .bin/singleNode.yaml .
+          helm install openldap -n single --create-namespace -f .bin/singleNode.yaml .
           kubectl rollout status sts openldap -n single
       - name: verify single node deployment
         shell: bash

@@ -1,6 +1,6 @@
 ** Please be patient while the chart is being deployed **
 
-OpenLDAP-Stack-HA has been installed. You can access the server from within the k8s cluster using:
+OpenLDAP has been installed. You can access the server from within the k8s cluster using:
 
   {{ template "openldap.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.ldapPort }}
   
@@ -32,7 +32,8 @@ You can access PHPLdapAdmin, using
   export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
   http://$NODE_IP:<NodePort>/
 {{- end }}
-
+  or kubectl port-forward --namespace {{ .Release.Namespace }} service/openldap-phpldapadmin 8180:80
+  and open http://localhost:8180
 {{- end }}
 
 
@@ -49,6 +50,11 @@ You can access Self Service Password, using
   export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
   http://$NODE_IP:<NodePort>/
 {{- end }}
+  or
+  kubectl port-forward --namespace {{ .Release.Namespace }} service/openldap-ltb-passwd 8280:80
+  and open
+  http://localhost:8280
+  to use change your password stored in the LDAP directory.
 {{- end }}
 
 Test server health using Helm test:
