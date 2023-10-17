@@ -1,6 +1,12 @@
 logLevel: debug
 env:
  SYMAS_DEBUG: "true"
+image:
+  # From repository https://hub.docker.com/r/symas/openldap/
+  repository: symas/openldap
+  tag: 2.6.6-debian-11-r7
+  pullPolicy: Always
+  pullSecrets: []
 resources:
   limits:
     cpu: "128m"
