@@ -101,4 +101,3 @@ jobs:
         shell: bash
         run: |
           helm delete -n single openldap
-
