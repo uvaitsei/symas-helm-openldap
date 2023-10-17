@@ -12,6 +12,10 @@ resources:
     cpu: "128m"
     memory: "64Mi"
 replicaCount: 3
+service:
+  ldapPortNodePort: 30389
+  sslLdapPortNodePort: 30636
+  type: NodePort
 ltb-passwd:
   ingress:
     hosts:
@@ -76,7 +80,3 @@ customLdifFiles:
     uid: jdupond
     uidnumber: 1000
     userpassword: {MD5}KOULhzfBhPTq9k7a9XfCGw==
-service:
-  ldapPortNodePort: 30389
-  sslLdapPortNodePort: 30636
-  type: NodePort

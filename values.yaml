@@ -22,8 +22,9 @@ global:
   configUserEnabled: true
   configUser: "admin"
   configPassword: Not@SecurePassw0rd
-  ldapPort: 389
-  sslLdapPort: 636
+  # Container is normally run as non-root user, so pick a port carefully.
+  ldapPort: 1389
+  sslLdapPort: 1636
 
 ## @section Common parameters
 
