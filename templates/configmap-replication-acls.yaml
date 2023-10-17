@@ -18,7 +18,7 @@ data:
   # replication
   syncprov.ldif: |
     # Load syncprov module
-    dn: cn=module{0},cn=config
+    dn: cn=module,cn=config
     objectClass: olcModuleList
     cn: module{0}
     olcModuleLoad: syncprov
@@ -69,7 +69,7 @@ data:
     changetype: modify
     replace: olcAccess
     olcAccess: {0}to *
-      by dn.exact=gidNumber=0+uidNumber=1001,cn=peercred,cn=external,cn=auth manage
+      by dn.exact=gidNumber=1001+uidNumber=1001,cn=peercred,cn=external,cn=auth manage
       by * break
     olcAccess: {1}to attrs=userPassword,shadowLastChange
       by self write

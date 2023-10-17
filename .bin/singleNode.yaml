@@ -1,7 +1,7 @@
 logLevel: debug
 env:
  SYMAS_DEBUG: "true"
-resources: 
+resources:
   limits:
     cpu: "128m"
     memory: "64Mi"
