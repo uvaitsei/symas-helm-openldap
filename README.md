@@ -24,7 +24,7 @@ Kubernetes provided by [Symas](https://symas.com), ready for production use.
 
 This [Helm chart](https://helm.sh/) packages the [Symas OpenLDAP container](https://github.com/symas/containers/tree/main/openldap).  For general help on OpenLDAP please take a look at our [knowledge base](https://kb.symas.com/), or go to the [OpenLDAP site](https://openldap.org/) and read the [documentation](https://openldap.org/doc/), the [quick start guide](https://openldap.org/doc/admin26/quickstart.html), and the detailed [manual pages](https://openldap.org/software/man.cgi).  [What we publish](https://repo.symas.com) is what we provide to you in this format to help you adopt and use OpenLDAP.  As always, everything is open-source.
 
-If you need help, please contact us at: +1.650.963.7601 or email [sales](mailto:sales@symas.com) or send mail to our [support](mailto:support@symas.com) teams directly with questions.  More on our support offerings can be [found on our website](https://www.symas.com/symas-tech-support).  We're also available on the Symas Discord [#openldap](https://discord.gg/t6upYQDx2) channel and chat with us directly.
+If you need help, please contact us at: +1.650.963.7601 or email [sales](mailto:sales@symas.com) or send mail to our [support](mailto:support@symas.com) teams directly with questions.  More on our support offerings can be [found on our website](https://www.symas.com/symas-tech-support).
 
 Reach out to us, we're here to help.
 
