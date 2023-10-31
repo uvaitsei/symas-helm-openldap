@@ -73,6 +73,13 @@ customTLS:
     repository: alpine/openssl
     tag: latest
   secret: ""  # The name of a kubernetes.io/tls type secret to use for TLS
+
+syncmonitor:
+  port: 8081
+  image:
+    repository: symas/syncmonitor
+    tag: latest
+
 ## Add additional labels to all resources
 extraLabels: {}
 
@@ -213,7 +220,7 @@ persistence:
 ##
 customLivenessProbe: {}
 ## @param customReadinessProbe Custom readinessProbe that overrides the default one
-##
+## which uses the synccheck
 customReadinessProbe: {}
 ## @param customStartupProbe Custom startupProbe that overrides the default one
 ##

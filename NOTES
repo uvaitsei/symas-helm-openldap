@@ -1,0 +1,13 @@
+kubectl describe ingress
+helm -n ds uninstall openldap && kubectl -n ds delete pvc --all
+.bin/local-test.sh
+helm install --dry-run --debug openldap -f .bin/myval.yaml .
+
+        - name: syncmonitor-readiness-probe
+          image: {{ include "openldap.syncmonitorContainerImage" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+          - name: BASE_DN
+            value: '{{ template "global.bindDN" . }}'
+          args: [ {{- include "ldapURIs" . }} ]
+

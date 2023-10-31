@@ -7,6 +7,9 @@ image:
   tag: 2.6.6-debian-11-r9
   pullPolicy: Always
   pullSecrets: []
+syncmonitor:
+  image:
+    tag: 0.0.1-r1
 resources:
   limits:
     cpu: "128m"

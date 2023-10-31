@@ -122,6 +122,23 @@ Generate olcSyncRepl list
 {{- end -}}
 
 {{/*
+Generate ldap: URIs list
+*/}}
+{{- define "ldapURIs" }}
+{{- $name := (include "openldap.fullname" .) }}
+{{- $namespace := .Release.Namespace }}
+{{- $cluster := .Values.replication.clusterName }}
+{{- $nodeCount := .Values.replicaCount | int }}
+{{- $port := .Values.global.ldapPort | int }}
+{{- $uris := dict "servers" (list) -}}
+  {{- range $index0 := until $nodeCount }}
+    {{- $index1 := $index0 | add1 }}
+    {{- $noop := printf "ldap://%s-%d.%s-headless.%s.svc.%s:%d" $name $index0 $name $namespace $cluster $port | quote | append $uris.servers | set $uris "servers" -}}
+  {{- end -}}
+  {{- join "," $uris.servers -}}
+{{- end -}}
+
+{{/*
 Renders a value that contains template.
 Usage:
 {{ include "openldap.tplValue" ( dict "value" .Values.path.to.the.Value "context" $) }}
@@ -150,10 +167,18 @@ Return the proper Docker Image Registry Secret Names
 
 
 {{/*
-Return the proper Openldap init container image name
+Return the proper OpenLDAP init container image name
 */}}
 {{- define "openldap.initContainerImage" -}}
 {{- include "common.images.image" (dict "imageRoot" .Values.customTLS.image "global" .Values.global) -}}
+{{- end -}}
+
+
+{{/*
+Return the proper OpenLDAP syncmonitor container image name
+*/}}
+{{- define "openldap.syncmonitorContainerImage" -}}
+{{- include "common.images.image" (dict "imageRoot" .Values.syncmonitor.image "global" .Values.global) -}}
 {{- end -}}
 
 
@@ -221,7 +246,7 @@ Return the server name
 {{- end -}}
 
 {{/*
-Return the bdmin indDN
+Return the admin bindDN
 */}}
 {{- define "global.bindDN" -}}
 {{- printf "cn=%s,%s" .Values.global.adminUser (include "global.baseDomain" .) -}}
