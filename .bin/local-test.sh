@@ -24,7 +24,8 @@ fi
 if ! $(kubectl get namespace | grep projectcontour > /dev/null 2>&1); then
     info "Installing Contour ingress controller with Envoy"
     kubectl apply -f https://projectcontour.io/quickstart/contour.yaml
-    kubectl patch daemonsets -n projectcontour envoy -p '{"spec":{"template":{"spec":{"nodeSelector":{"ingress-ready":"true"}}}}}'
+    # https://kind.sigs.k8s.io/docs/user/ingress/
+    kubectl patch daemonsets -n projectcontour envoy -p '{"spec":{"template":{"spec":{"nodeSelector":{"ingress-ready":"true"},"tolerations":[{"key":"node-role.kubernetes.io/control-plane","operator":"Equal","effect":"NoSchedule"},{"key":"node-role.kubernetes.io/master","operator":"Equal","effect":"NoSchedule"}]}}}}'
     info "waiting for resource deployment to finish..."
     kubectl --namespace projectcontour rollout status deployments
 fi
@@ -68,6 +69,9 @@ fi
 
 info "Fetch the LDAP admin password from k8s"
 export LDAP_ADMIN_PASSWORD=$(kubectl get secret --namespace ${NAMESPACE} openldap -o jsonpath="{.data.LDAP_ADMIN_PASSWORD}" | base64 --decode; echo)
+
+# syncmonitor?
+# docker run --rm -ti 
 
 info "Try to find data in our cluster"
 LDAPTLS_REQCERT=never ldapsearch -x -D 'cn=admin,dc=example,dc=org' -w $LDAP_ADMIN_PASSWORD -H ldaps://localhost:30636 -b 'dc=example,dc=org'
