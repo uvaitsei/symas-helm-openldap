@@ -3,6 +3,8 @@ helm -n ds uninstall openldap && kubectl -n ds delete pvc --all
 .bin/local-test.sh
 helm install --dry-run --debug openldap -f .bin/myval.yaml .
 
+https://suraj.io/post/2021/06/automatic-cert-gen/
+
         - name: syncmonitor-readiness-probe
           image: {{ include "openldap.syncmonitorContainerImage" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
