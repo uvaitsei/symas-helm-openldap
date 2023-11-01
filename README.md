@@ -84,7 +84,8 @@ In addition, Symas sometimes includes packages or configuration by default that 
 
 We use the [Symas provided container image](https://github.com/symas/containers/tree/main/openldap) forked from, and compatible with, the [Bitnami OpenLDAP container](https://github.com/bitnami/containers/tree/main/bitnami/openldap). Please consult to documentation of the image for more information.
 
-The following table lists the configurable parameters of the openldap chart and their default values.
+The following table lists the configurable parameters of the `symas/openldap`
+with their default values.
 
 ### Global section
 
@@ -96,11 +97,11 @@ Global parameters to configure the deployment of the application.
 | `global.imagePullSecrets`                     | Global list of imagePullSecrets                                                                                                                        | `[]`                 |
 | `global.ldapDomain`                     | Domain LDAP can be explicit `dc=example,dc=org` or domain based `example.org`                                                                                                                         | `example.org`                 |
 | `global.existingSecret`                     | Use existing secret for credentials - the expected keys are LDAP_ADMIN_PASSWORD and LDAP_CONFIG_ADMIN_PASSWORD                                         | `""`                |
-| `global.adminUser`                     | Openldap database admin user                                                                                                                        | `admin`                 |
-| `global.adminPassword`                     | Administration password of Openldap                                                                                                                        | `Not@SecurePassw0rd`                 |
+| `global.adminUser`                     | OpenLDAP database admin user                                                                                                                        | `admin`                 |
+| `global.adminPassword`                     | Administration password of OpenLDAP                                                                                                                        | `Not@SecurePassw0rd`                 |
 | `global.configUserEnabled`                     |  Whether to create a configuration admin user                                                                                                                       | `true`                 |
 | `global.configUser`                     |  Openldap configuration admin user                                                                                                                       | `admin`                 |
-| `global.configPassword`                     | Configuration password of Openldap                                                                                                                        | `Not@SecurePassw0rd`                 |
+| `global.configPassword`                     | Configuration password of OpenLDAP                                                                                                                        | `Not@SecurePassw0rd`                 |
 | `global.ldapPort`                     | Ldap port                                                                                                                         | `389`                 |
 | `global.sslLdapPort`                     | Ldaps port                                                                                                                         | `636`                 |
 
@@ -114,24 +115,24 @@ Parameters related to the configuration of the application.
 | `users`          | User list to create (comma separated list) , can't be use with customLdifFiles | "" |
 | `userPasswords`          | User password to create (comma seprated list)  | "" |
 | `group`          | Group to create and add list of user above | "" |
-| `env`                              | List of key value pairs as env variables to be sent to the docker image. See https://github.com/symas/containers/tree/main/openldap for available ones | `[see values.yaml]` |
+| `env`                              | [Environment variables](https://github.com/symas/containers/tree/main/openldap) as a list of key value pairs available within the container. | `[see values.yaml]` |
 | `customTLS.enabled`                      | Set to enable TLS/LDAPS with custom certificate - should also set `tls.secret`                                                                                    | `false`             |
-| `customTLS.secret`                       | Secret containing TLS cert and key must contain the keys tls.key , tls.crt and ca.crt                                                                       | `""`                |
-| `customSchemaFiles` | Custom openldap schema files used in addition to default schemas                                                                    | `""`                |
-| `customLdifFiles`                       | Custom openldap configuration files used to override default settings                                                                      | `""`                |
+| `customTLS.secret`                       | Secret containing TLS cert and key must contain the keys `tls.key` , `tls.crt` and `ca.crt`                                                                       | `""`                |
+| `customSchemaFiles` | Custom OpenLDAP schema files used in addition to default schemas                                                                    | `""`                |
+| `customLdifFiles`                       | Custom OpenLDAP configuration files used to override default settings                                                                      | `""`                |
 | `customLdifCm`                       | Existing configmap with custom ldif. Can't be use with customLdifFiles                                                            | `""`                |
 | `customAcls`                       | Custom openldap ACLs. Overrides default ones.                                                                      | `""`                |
 | `replication.enabled`              | Enable the multi-master replication | `true` |
-| `replication.retry`              | retry period for replication in sec | `60` |
-| `replication.timeout`              | timeout for replication  in sec| `1` |
-| `replication.starttls`              | starttls replication | `critical` |
-| `replication.tls_reqcert`              | tls certificate validation for replication | `never` |
-| `replication.interval`             | interval for replication | `00:00:00:10` |
+| `replication.retry`              | Retry period for replication in sec | `60` |
+| `replication.timeout`              | Timeout for replication  in sec| `1` |
+| `replication.starttls`              | Enable starttls replication | `critical` |
+| `replication.tls_reqcert`              | TLS certificate validation for replication | `never` |
+| `replication.interval`             | Interval for replication | `00:00:00:10` |
 | `replication.clusterName`          | Set the clustername for replication | "cluster.local" |
 
-### Phpladadmin configuration
+### PHPLdapAdmin Configuration
 
-Parameters related to PHPLdapAdmin
+Parameters related to [PHPLdapAdmin](https://github.com/leenooks/phpLDAPadmin)
 
 | Parameter                          | Description                                                                                                                               | Default             |
 | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
@@ -139,19 +140,19 @@ Parameters related to PHPLdapAdmin
 | `phpldapadmin.ingress`             | Ingress of Phpldapadmin | `{}` |
 | `phpldapadmin.env`  | Environment variables for PhpldapAdmin| `{PHPLDAPADMIN_LDAP_CLIENT_TLS_REQCERT: "never"}` |
 
-For more advance configuration see [README.md](./advanced_examples/README.md)  
+For more advance configuration see [README.md](./advanced_examples/README.md)
 For all possible chart parameters see chart's [README.md](./charts/phpldapadmin/README.md)
 
-### Self-service password configuration
+### Self-service Password Configuration
 
-Parameters related to Self-service password.
+Parameters related to [LDAP Tool Box Self Service Password](https://github.com/ltb-project/self-service-password).
 
 | Parameter                          | Description                                                                                                                               | Default             |
 | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
 |`ltb-passwd.enabled`| Enable the deployment of Ltb-Passwd| `true` |
 |`ltb-passwd.ingress`| Ingress of the Ltb-Passwd service | `{}` |
 
-For more advance configuration see [README.md](./advanced_examples/README.md)  
+For more advance configuration see [README.md](./advanced_examples/README.md)
 For all possible parameters see chart's [README.md](./charts/ltb-passwd/README.md)
 
 ### Kubernetes parameters
@@ -185,53 +186,57 @@ Parameters related to Kubernetes.
 | `customLivenessProbe`                   | Readiness probe configuration                                                                                                             | `[see values.yaml]` |
 | `customStartupProbe`                     | Startup probe configuration                                                                                                               | `[see values.yaml]` |
 | `resources`                        | Container resource requests and limits in yaml                                                                                            | `{}`                |
-| `podSecurityContext`              | Enabled OPENLDAP  pods' Security Context | `true` |``
-| `containerSecurityContext`              | Set OPENLDAP  pod's Security Context fsGroup | `true` |
-| `existingConfigmap`              | existingConfigmap The name of an existing ConfigMap with your custom configuration for OPENLDAP  | `` |
-| `podLabels`              | podLabels Extra labels for OPENLDAP  pods| `{}` |
-| `podAnnotations`              | podAnnotations Extra annotations for OPENLDAP  pods | `{}` |
-| `podAffinityPreset`              | podAffinityPreset Pod affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`| `` |
-| `podAntiAffinityPreset`              | podAntiAffinityPreset Pod anti-affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard` | `soft` |
+| `podSecurityContext`              | Enabled OpenLDAP  pods' Security Context | `true` |
+| `containerSecurityContext`              | Set OpenLDAP  pod's Security Context fsGroup | `true` |
+| `existingConfigmap`              | existingConfigmap The name of an existing ConfigMap with your custom configuration for OpenLDAP  | |
+| `podLabels`              | podLabels Extra labels for OpenLDAP  pods| `{}` |
+| `podAnnotations`              | podAnnotations Extra annotations for OpenLDAP  pods | `{}` |
+| `podAffinityPreset`              | podAffinityPreset Pod affinity preset. Superceeded by `affinity`. Allowed values: `soft` or `hard`|  |
+| `podAntiAffinityPreset`              | podAntiAffinityPreset Pod anti-affinity preset. Superceeded by `affinity`. Allowed values: `soft` or `hard` | `soft` |
 | `pdb.enabled`                      | Enable Pod Disruption Budget                                                                                                              | `false`             |
-| `pdb.minAvailable`                 | Configure PDB to have at least this many health replicas.                                                                                 | `1`                 |
-| `pdb.maxUnavailable`               | Configure PDB to have at most this many unhealth replicas.                                                                                | `<unset>`           |
-| `nodeAffinityPreset`              | nodeAffinityPreset.type Node affinity preset type. Ignored if `affinity` is set. Allowed values: `soft` or `hard` | `true` |
-| `affinity`              | affinity Affinity for OPENLDAP  pods assignment | `` |
-| `nodeSelector`              | nodeSelector Node labels for OPENLDAP  pods assignment | `` |
-| `sidecars`              | sidecars Add additional sidecar containers to the OPENLDAP  pod(s) | `` |
-| `initContainers`              | initContainers Add additional init containers to the OPENLDAP  pod(s) | `` |
-| `volumePermissions`              | 'volumePermissions' init container parameters | `` |
-| `priorityClassName`              | OPENLDAP pods' priority class name | `` |
+| `pdb.minAvailable`                 | Configure PDB to have at least `min` healthy replicas.                                                                                 | `1`                 |
+| `pdb.maxUnavailable`               | Configure PDB to have at most `max` unhealthy replicas.                                                                                | `<unset>`           |
+| `nodeAffinityPreset`              | nodeAffinityPreset.type Node affinity preset type. Superceeded by `affinity`. Allowed values: `soft` or `hard` | `true` |
+| `affinity`              | affinity Affinity for OpenLDAP  pods assignment | |
+| `nodeSelector`              | nodeSelector Node labels for OpenLDAP pods assignment | |
+| `sidecars`              | sidecars Add additional sidecar containers to the OpenLDAP pod(s) | |
+| `initContainers`              | initContainers Add additional init containers to the OpenLDAP pod(s) | |
+| `volumePermissions`              | 'volumePermissions' init container parameters |  |
+| `priorityClassName`              | OpenLDAP pods' priority class name | |
 | `tolerations`              | Tolerations for pod assignment | [] |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
 
-Alternatively, a YAML file that specifies the values for the parameters can be provided while installing the chart. For example,
+Alternatively, provide a YAML file that specifies the values for the parameters
+when installing the chart.
+
+**Example** :
 
 ```bash
 $ helm install --name my-release -f values.yaml stable/openldap
 ```
 
-> **Tip**: You can use the default [values.yaml](values.yaml)
+> **Tip**: You can use the default [values.yaml](values.yaml) or customize it as
+> you require
 
 
 ## PhpLdapAdmin
 
-To enable [PhpLdapAdmin](https://github.com/leenooks/phpLDAPadmin) set `phpldapadmin.enabled`  to `true`
+To enable [PhpLdapAdmin](https://github.com/leenooks/phpLDAPadmin) set
+`phpldapadmin.enabled`  to `true` (which is the default).
 
-Ingress can be configure if you want to expose the service.
-Setup the env part of the configuration to access the OpenLdap server
+Configure ingress to expose the service. Setup the env part of the configuration
+to access the OpenLDAP server.
 
-**Note** : The ldap host should match the following `namespace.Appfullname`
+> **Note** : The OpenLDAP host should match the following `namespace.Appfullname`
 
-Example :
 ```
 phpldapadmin:
   enabled: true
   ingress:
     enabled: true
     annotations: {}
-    # Assuming that ingress-nginx is used
+    # When using NGiNX (ingress-nginx)
     ingressClassName: nginx
     path: /
     ## Ingress Host
@@ -242,15 +247,14 @@ phpldapadmin:
 
 ```
 ## Self-service-password
-To enable Self-service-password set `ltb-passwd.enabled`  to `true`
+To enable Self-service-password set `ltb-passwd.enabled`  to `true` (which is
+the default).
 
-Ingress can be configure if you want to expose the service.
+Configure ingress to expose the service. Setup the `ldap` part with the
+information of the OpenLDAP server. Set `bindDN` accordingly to your ldap
+domain.
 
-Setup the `ldap` part with the information of the OpenLdap server.
-
-Set `bindDN` accordingly to your ldap domain
-
-**Note** : The ldap server host should match the following `ldap://namespace.Appfullname`
+> **Note** : The OpenLDAP server host should match the following `ldap://namespace.Appfullname`
 
 Example :
 ```
@@ -259,36 +263,86 @@ ltb-passwd:
   ingress:
     enabled: true
     annotations: {}
-    # Assuming that ingress-nginx is used
+    # When using NGiNX (ingress-nginx)
     ingressClassName: nginx
     host: "ssl-ldap2.local"
 
 ```
 
-## Cleanup orphaned Persistent Volumes
+## Cleanup orphaned Persistent Volumes (PVs)
 
-Deleting the Deployment will not delete associated Persistent Volumes if persistence is enabled.
-
-Do the following after deleting the chart release to clean up orphaned Persistent Volumes.
+Deleting the Helm deployment of this chart *will not delete* any associated
+Persistent Volumes. Firts delete the chart, then do the following to remove
+orphaned Persistent Volumes. Failing to do this will leave resources allocated
+and unused in your Kubernetes cluster.
 
 ```bash
 $ kubectl delete pvc -l release=${RELEASE-NAME}
 ```
 
-## Custom Secret
+## Custom secret
 
 `global.existingSecret` can be used to override the default secret.yaml provided
 
 
 ## Troubleshoot
 
-You can increase the level of log using `env.LDAP_LOGLEVEL`
+You can increase the level of log using `env.LDAP_LOGLEVEL=265|0|-1`,
+`env.SYMAS_DEBUG=true`, and/or `env.SYMAS_DEBUG_SETUP=true` (more information in
+the [container's
+documentation](https://github.com/Symas/containers/blob/main/openldap/README.md))
+or in [OpenLDAP documentation](https://www.openldap.org/doc/admin26/slapdconfig.html)
 
-Valid log levels can be found [here](https://www.openldap.org/doc/admin24/slapdconfig.html)
 
-### Boostrap custom ldif
+### Log Levels
+| Level | Keyword | Description |
+| ----- | ------- | ----------- |
+| -1 | any	| enable all debugging |
+| 0	| 	no debugging |
+| 1 |	(`0x1` trace)	| trace function calls |
+| 2	| (`0x2` packets)	| debug packet handling |
+| 4	| (`0x4` args)	| heavy trace debugging |
+| 8	| (`0x8` conns)	| connection management |
+| 16	| (`0x10` BER)	| print out packets sent and received |
+| 32	| (`0x20` filter)	| search filter processing |
+| 64	| (`0x40` config)	| configuration processing |
+| 128	| (`0x80` ACL)	| access control list processing |
+| 256	| (`0x100` stats)	| stats log connections/operations/results |
+| 512	| (`0x200` stats2)	| stats log entries sent |
+| 1024	| (`0x400` shell)	| print communication with shell backends |
+| 2048	| (`0x800` parse)	| print entry parsing debugging |
+| 16384	| (`0x4000` sync)	| syncrepl consumer processing |
+| 32768	| (`0x8000` none)	| only messages that get logged whatever log level is set |
 
-**Warning** when using custom ldif in the `customLdifFiles` or `customLdifCm` section you  have to create the high level object `organization`
+The desired log level can be input as a single integer that combines the
+(bitwise ORed) desired levels, both in decimal or in hexadecimal notation, as a
+list of integers (ORed internally), or as a list of the names shown between
+brackets, such that:
+
+ * `loglevel 129`
+ * `loglevel 0x81`
+ * `loglevel 128 1`
+ * `loglevel 0x80 0x1`
+ * `loglevel acl trace`
+
+are equivalent.
+
+**Examples** :
+
+* `loglevel -1`: this will enable all log levels.
+* `floglevel conns filter`: just log the connection and search filter processing.
+* `loglevel none`: log those messages configured without loglevel, this differs
+from setting the log level to 0, when no logging occurs, as it requires at least
+the `None` level to have high priority messages logged.
+* `loglevel stats`: basic stats logging, the default.
+
+
+### Boostrap Custom ldif
+
+**Warning** when using custom ldif in the `customLdifFiles` or `customLdifCm`
+section you have to create the high level object `organization`.
+
+**Example** :
 
 ```
 dn: dc=test,dc=example
@@ -299,13 +353,20 @@ objectclass: dcObject
 objectclass: organization
 ```
 
-**note** the admin user is created by the application and should not be added as a custom ldif
+**Note** : This chart does not yet provide a way to create a custom admin user
+or modify internal configuration (e.g. `cn=config` , `cn=module{0},cn=config`)
 
-All internal configuration like `cn=config` , `cn=module{0},cn=config` cannot be configured yet.
-
-## Changelog/Updating
+## ChangeLog/Updating
 
 ### To 1.0.0
 
-The Symas fork of the [jp-gouin](https://github.com/jp-gouin/helm-openldap) Helm chart so as to use our containers and provide commercial support.
+* The Symas fork of the [jp-gouin](https://github.com/jp-gouin/helm-openldap) Helm chart so as to use our containers and provide commercial support.
+
+### To 1.0.2
+
+* The first functional chart using the Symas OpenLDAP container.
+
+### To 1.0.3
+
+* Reviewed by Symas engineers, changes integrated.
 

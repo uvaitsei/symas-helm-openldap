@@ -1,6 +1,8 @@
 logLevel: debug
 env:
+ LDAP_LOGLEVEL: "16640"
  SYMAS_DEBUG: "true"
+ SYMAS_SETUP_DEBUG: "false"
 image:
   # From repository https://hub.docker.com/r/symas/openldap/
   repository: symas/openldap
@@ -26,9 +28,6 @@ phpldapadmin:
     - "phpldapadmin.example"
 customTLS:
   enabled: true
-  image:
-    repository: alpine/openssl
-    tag: latest
   secret: "custom-cert"
 customSchemaFiles:
   10_owncloud_schema.ldif: |-

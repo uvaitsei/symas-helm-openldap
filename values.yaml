@@ -96,7 +96,7 @@ service:
 # Be careful, do not modify the following values unless you know exactly what your are doing
 env:
  SYMAS_DEBUG: "true"
- LDAP_LOGLEVEL: "256"
+ LDAP_LOGLEVEL: "16640" # stats and sync
  LDAP_TLS_ENFORCE: "false"
  LDAPTLS_REQCERT: "never"
  LDAP_ENABLE_TLS: "yes"
@@ -490,10 +490,15 @@ ltb-passwd:
     # if you want to use a specific key of the credentials secret instead of the default one (LDAP_ADMIN_PASSWORD)
     # passKey: LDAP_MY_KEY
 
+## ldap-ui
+## For more parameters check following file: ./charts/ldap-ui/values.yaml
+ldap-ui:
+  enabled: false
+
 ## phpldapadmin
 ## For more parameters check following file: ./charts/phpldapadmin/values.yaml
 phpldapadmin:
-  enabled: true
+  enabled: false
   image:
     tag: 0.9.0
   env:
