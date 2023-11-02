@@ -128,6 +128,9 @@ pdb:
 #   anothercustom.ldif: |-
 #     # another custom schema
 
+# Extra OpenLDAP schema files used to be used in addition to default schemas
+extraSchemaFiles: cosine,inetorgperson,nis
+
 ## Existing configmap with custom ldif
 # Can't be use with customLdifFiles
 # Same format as customLdifFiles
@@ -490,15 +493,10 @@ ltb-passwd:
     # if you want to use a specific key of the credentials secret instead of the default one (LDAP_ADMIN_PASSWORD)
     # passKey: LDAP_MY_KEY
 
-## ldap-ui
-## For more parameters check following file: ./charts/ldap-ui/values.yaml
-ldap-ui:
-  enabled: false
-
 ## phpldapadmin
 ## For more parameters check following file: ./charts/phpldapadmin/values.yaml
 phpldapadmin:
-  enabled: false
+  enabled: true
   image:
     tag: 0.9.0
   env:

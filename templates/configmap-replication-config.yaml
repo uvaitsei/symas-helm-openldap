@@ -5,7 +5,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "openldap.fullname" . }}-replication-acls
+  name: {{ template "openldap.fullname" . }}-replication-config
   labels:
     app: {{ template "openldap.name" . }}
     chart: {{ template "openldap.chart" . }}
@@ -60,7 +60,6 @@ data:
     changetype: modify
     add: olcMirrorMode
     olcMirrorMode: TRUE
-  # acls
   acls.ldif: |
 {{- if .Values.customAcls }}
     {{- .Values.customAcls | nindent 4 }}

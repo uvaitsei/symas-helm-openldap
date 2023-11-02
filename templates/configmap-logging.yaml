@@ -1,0 +1,29 @@
+#
+# A ConfigMap spec for openldap slapd that map directly to files under
+# /container/service/slapd/assets/config/bootstrap/ldif/custom
+#
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "openldap.fullname" . }}-replication-logging
+  labels:
+    app: {{ template "openldap.name" . }}
+    chart: {{ template "openldap.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+{{- if .Values.extraLabels }}
+{{ toYaml .Values.extraLabels | indent 4 }}
+{{- end }}
+data:
+  logging.ldif: |
+{{- if .Values.customAcls }}
+    {{- .Values.customAcls | nindent 4 }}
+{{- else }}
+    dn: cn=config
+    changetype: modify
+    replace: olcLogFileFormat
+    olcLogFileFormat: syslog-utc
+    -
+    replace: olcLogFileOnly
+    olcLogFileOnly: TRUE
+{{- end }}

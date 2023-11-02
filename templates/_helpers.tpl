@@ -161,7 +161,7 @@ Return the proper Openldap init container image name
 Return the list of builtin schema files to mount
 Cannot return list => return string comma separated
 */}}
-{{- define "openldap.builtinSchemaFiles" -}}
+{{- define "openldap.replicationConfigFiles" -}}
   {{- $schemas := "" -}}
   {{- if .Values.replication.enabled -}}
     {{- $schemas = "syncprov,serverid,csyncprov,rep,bsyncprov,brep,acls" -}}
@@ -178,15 +178,6 @@ Cannot return list => return string comma separated
 {{- define "openldap.customSchemaFiles" -}}
   {{- $schemas := "" -}}
   {{- $schemas := ((join "," (.Values.customSchemaFiles | keys))  | replace ".ldif" "") -}}
-  {{- print $schemas -}}
-{{- end -}}
-
-{{/*
-Return the list of all schema files to use
-Cannot return list => return string comma separated
-*/}}
-{{- define "openldap.schemaFiles" -}}
-  {{- $schemas := (include "openldap.builtinSchemaFiles" .) -}}
   {{- print $schemas -}}
 {{- end -}}
 
