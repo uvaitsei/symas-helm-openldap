@@ -82,16 +82,13 @@ spec:
             - sh
             - -c
             - |
-              ls -al /cm-schemas-acls /custom_config
+              ls -al /custom_config
               cp -p /cm-schemas-acls/*.ldif /custom_config/
               ls -al /custom_config
-              sed -i -e "s/%%CONFIG_PASSWORD%%/${LDAP_CONFIG_ADMIN_PASSWORD}/g" /custom_config/*
-              sed -i -e "s/%%ADMIN_PASSWORD%%/${LDAP_ADMIN_PASSWORD}/g" /custom_config/*
+              sed -i -e "s/%%CONFIG_PASSWORD%%/${LDAP_CONFIG_ADMIN_PASSWORD}/g" -e "s/%%ADMIN_PASSWORD%%/${LDAP_ADMIN_PASSWORD}/g" /custom_config/*
           volumeMounts:
-            - name: cm-replication-acls
-              mountPath: "/cm-schemas-acls"
-            - name: replication-acls
-              mountPath: "/custom_config"
+            - name: replication-config
+              mountPath: "/docker-entrypoint-initdb.d"
           envFrom:
             - secretRef:
                 name: {{ template "openldap.secretName" . }}
@@ -205,22 +202,12 @@ spec:
             - name: certs
               mountPath: /opt/bitnami/openldap/certs
               readOnly: true
-            - name: logging-config
-              mountPath: /docker-entrypoint-initdb.d/logging.ldif
-              subPath: /docker-entrypoint-initdb.d/logging.ldif
-              readOnly: true
             {{- range $file := (include "openldap.replicationConfigFiles" . | split ",") }}
             - name: replication-config
               mountPath: /docker-entrypoint-initdb.d/{{ $file }}.ldif
-              subPath: /docker-entrypoint-initdb.d/{{ $file }}.ldif
+              subPath: {{ $file }}.ldif
               readOnly: true
             {{- end }}
-            {{- range $file := (include "openldap.replicationConfigFiles" . | split ",") }}
-            - name: replication-acls
-              mountPath: /opt/bitnami/openldap/etc/schema/acls.ldif
-              subPath: /opt/bitnami/openldap/etc/schema/acls.ldif
-              readOnly: true
-              {{- end }}
 {{- if .Values.customSchemaFiles}}
             {{- range $file := (include "openldap.customSchemaFiles" . | split ",") }}
             - name: custom-schema-files
@@ -256,9 +243,6 @@ spec:
             claimName: {{ .Values.persistence.existingClaim }}
 {{- end }}
 {{- end }}
-        - name: logging-config
-          configMap:
-            name: {{ template "openldap.fullname" . }}-logging-config
 {{- if .Values.global.existingSecret }}
         - name: replication-config
           emptyDir:
@@ -267,11 +251,6 @@ spec:
         - name: replication-config
           configMap:
             name: {{ template "openldap.fullname" . }}-replication-config
-{{- end }}
-{{- if .Values.replication.enabled }}
-        - name: replication-acls
-          configMap:
-            name: {{ template "openldap.fullname" . }}-replication-acls
 {{- end }}
 {{- if .Values.customLdifFiles }}
         - name: custom-ldif-files

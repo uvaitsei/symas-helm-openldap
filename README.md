@@ -282,7 +282,13 @@ $ kubectl delete pvc -l release=${RELEASE-NAME}
 
 ## Custom secret
 
-`global.existingSecret` can be used to override the default secret.yaml provided
+Override the default `LDAP_ADMIN_PASSWORD` and `LDAP_CONFIG_ADMIN_PASSWORD` by
+creating a Kubernetes secret referenced by `global.existingSecret` to override
+the default secret.yaml provided.  That will then trigger an init container that
+will replace occurrences of `%%CONFIG_PASSWORD%%` with the
+`LDAP_CONFIG_PASSWORD` and `%%ADMIN_PASSWORD%%` with the `LDAP_ADMIN_PASSWORD`
+in any `.ldif` files found in the `/custom_config` or `/cm-schemas-acls`
+directories before starting `slapd`.
 
 
 ## Troubleshoot

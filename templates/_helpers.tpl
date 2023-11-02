@@ -70,6 +70,7 @@ Generate olcSyncRepl list
 {{- define "olcSyncRepls" -}}
 {{- $name := (include "openldap.fullname" .) }}
 {{- $namespace := .Release.Namespace }}
+{{- $domain := ternary (include "global.baseDomain" .) "cn=config" (empty .Values.global.ldapDomain) }}
 {{- $bindDNUser := .Values.global.adminUser }}
 {{- $cluster := .Values.replication.clusterName }}
 {{- $configPassword :=  ternary .Values.global.configPassword "%%CONFIG_PASSWORD%%" (empty .Values.global.existingSecret) }}
@@ -81,7 +82,7 @@ Generate olcSyncRepl list
 {{- $port := .Values.global.ldapPort | int }}
   {{- range $index0 := until $nodeCount }}
     {{- $index1 := $index0 | add1 }}
-    olcSyncRepl: rid=00{{ $index1 }} provider=ldap://{{ $name }}-{{ $index0 }}.{{ $name }}-headless.{{ $namespace }}.svc.{{ $cluster }}:{{ $port }} binddn="cn={{ $bindDNUser }},cn=config" bindmethod=simple credentials={{ $configPassword }} searchbase="cn=config" type=refreshAndPersist retry="{{ $retry }} +" timeout={{ $timeout }} starttls={{ $starttls }} tls_reqcert={{ $tls_reqcert }}
+    olcSyncRepl: rid=00{{ $index1 }} provider=ldap://{{ $name }}-{{ $index0 }}.{{ $name }}-headless.{{ $namespace }}.svc.{{ $cluster }}:{{ $port }} binddn="{{ printf "cn=%s,%s" $bindDNUser $domain }}" bindmethod=simple credentials={{ $configPassword }} searchbase="cn=config" type=refreshAndPersist retry="{{ $retry }} +" timeout={{ $timeout }} starttls={{ $starttls }} tls_reqcert={{ $tls_reqcert }}
   {{- end -}}
 {{- end -}}
 

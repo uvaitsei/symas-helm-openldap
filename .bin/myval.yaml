@@ -6,7 +6,7 @@ env:
 image:
   # From repository https://hub.docker.com/r/symas/openldap/
   repository: symas/openldap
-  tag: 2.6.6-debian-11-r10
+  tag: 2.6.6-debian-11-r11
   pullPolicy: Always
   pullSecrets: []
 resources:
@@ -19,10 +19,12 @@ service:
   sslLdapPortNodePort: 30636
   type: NodePort
 ltb-passwd:
+  enabled: true
   ingress:
     hosts:
     - "ssl-ldap2.example"
 phpldapadmin:
+  enabled: true
   ingress:
     hosts:
     - "phpldapadmin.example"
