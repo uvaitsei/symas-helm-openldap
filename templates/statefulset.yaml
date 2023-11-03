@@ -44,6 +44,7 @@ spec:
       {{- if .Values.initContainers }}
         {{- include "common.tplvalues.render" (dict "value" .Values.initContainers "context" $) | nindent 8 }}
       {{- end }}
+      {{- if not .Values.customTLS.enabled}}
         - name: init-tls-secret
           image: {{ include "openldap.initContainerImage" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
@@ -51,17 +52,13 @@ spec:
             - sh
             - -c
             - |
-              {{- if not .Values.customTLS.enabled}}
-              openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN={{ .Values.global.ldapDomain }}' -keyout /tmp-certs/tls.key -out /tmp-certs/tls.crt -days 365
-              chmod 777  /tmp-certs/*
-              {{- end }}
-              cp -Lr /tmp-certs/* /certs
+              openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN={{ .Values.global.ldapDomain }}' -keyout /certs/tls.key -out /certs/tls.crt -days 365
+              chmod 0660  /certs/*
               [ -e /certs/ca.crt ] || cp -a /certs/tls.crt /certs/ca.crt
           volumeMounts:
             - name: certs
               mountPath: "/certs"
-            - name: secret-certs
-              mountPath: "/tmp-certs"
+      {{- end }}
       {{- if .Values.volumePermissions.enabled }}
         - name: volume-permissions
           image: {{ include "openldap.initContainerImage" . }}
@@ -85,16 +82,13 @@ spec:
             - sh
             - -c
             - |
-              ls -al /cm-schemas-acls /custom_config
+              ls -al /custom_config
               cp -p /cm-schemas-acls/*.ldif /custom_config/
               ls -al /custom_config
-              sed -i -e "s/%%CONFIG_PASSWORD%%/${LDAP_CONFIG_ADMIN_PASSWORD}/g" /custom_config/*
-              sed -i -e "s/%%ADMIN_PASSWORD%%/${LDAP_ADMIN_PASSWORD}/g" /custom_config/*
+              sed -i -e "s/%%CONFIG_PASSWORD%%/${LDAP_CONFIG_ADMIN_PASSWORD}/g" -e "s/%%ADMIN_PASSWORD%%/${LDAP_ADMIN_PASSWORD}/g" /custom_config/*
           volumeMounts:
-            - name: cm-replication-acls
-              mountPath: "/cm-schemas-acls"
-            - name: replication-acls
-              mountPath: "/custom_config"
+            - name: replication-config
+              mountPath: "/docker-entrypoint-initdb.d"
           envFrom:
             - secretRef:
                 name: {{ template "openldap.secretName" . }}
@@ -204,12 +198,13 @@ spec:
           {{- end }}
           volumeMounts:
             - name: data
-              mountPath: /openldap/
+              mountPath: /openldap
             - name: certs
               mountPath: /opt/bitnami/openldap/certs
-            {{- range $file := (include "openldap.builtinSchemaFiles" . | split ",") }}
-            - name: replication-acls
-              mountPath: /opt/bitnami/openldap/etc/schema/{{ $file }}.ldif
+              readOnly: true
+            {{- range $file := (include "openldap.replicationConfigFiles" . | split ",") }}
+            - name: replication-config
+              mountPath: /docker-entrypoint-initdb.d/{{ $file }}.ldif
               subPath: {{ $file }}.ldif
             {{- end }}
 {{- if .Values.customSchemaFiles}}
@@ -229,6 +224,7 @@ spec:
             - name: {{ $fs.name }}
               mountPath: {{ $fs.targetPath }}/{{ .filename }}
               subPath: {{ .filename }}
+              readOnly: true
 {{- end }}
 {{- end }}
 {{- if .Values.extraVolumeMounts }}
@@ -246,16 +242,13 @@ spec:
 {{- end }}
 {{- end }}
 {{- if .Values.global.existingSecret }}
-        - name: cm-replication-acls
-          configMap:
-            name: {{ template "openldap.fullname" . }}-replication-acls
-        - name: replication-acls
+        - name: replication-config
           emptyDir:
             medium: Memory
 {{- else }}
-        - name: replication-acls
+        - name: replication-config
           configMap:
-            name: {{ template "openldap.fullname" . }}-replication-acls
+            name: {{ template "openldap.fullname" . }}-replication-config
 {{- end }}
 {{- if .Values.customLdifFiles }}
         - name: custom-ldif-files
@@ -271,15 +264,12 @@ spec:
           configMap:
             name: {{ template "openldap.fullname" . }}-customschema
 {{- end }}
-        - name: certs
-          emptyDir:
-            medium: Memory
 {{- if .Values.customTLS.enabled }}
-        - name: secret-certs
+        - name: certs
           secret:
             secretName: {{ .Values.customTLS.secret }}
 {{- else }}
-        - name: secret-certs
+        - name: certs
           emptyDir:
             medium: Memory
 {{- end }}

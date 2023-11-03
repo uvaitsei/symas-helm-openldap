@@ -70,6 +70,7 @@ Generate olcSyncRepl list
 {{- define "olcSyncRepls" -}}
 {{- $name := (include "openldap.fullname" .) }}
 {{- $namespace := .Release.Namespace }}
+{{- $domain := ternary (include "global.baseDomain" .) "cn=config" (empty .Values.global.ldapDomain) }}
 {{- $bindDNUser := .Values.global.adminUser }}
 {{- $cluster := .Values.replication.clusterName }}
 {{- $configPassword :=  ternary .Values.global.configPassword "%%CONFIG_PASSWORD%%" (empty .Values.global.existingSecret) }}
@@ -81,7 +82,7 @@ Generate olcSyncRepl list
 {{- $port := .Values.global.ldapPort | int }}
   {{- range $index0 := until $nodeCount }}
     {{- $index1 := $index0 | add1 }}
-    olcSyncRepl: rid=00{{ $index1 }} provider=ldap://{{ $name }}-{{ $index0 }}.{{ $name }}-headless.{{ $namespace }}.svc.{{ $cluster }}:{{ $port }} binddn="cn={{ $bindDNUser }},cn=config" bindmethod=simple credentials={{ $configPassword }} searchbase="cn=config" type=refreshAndPersist retry="{{ $retry }} +" timeout={{ $timeout }} starttls={{ $starttls }} tls_reqcert={{ $tls_reqcert }}
+    olcSyncRepl: rid=00{{ $index1 }} provider=ldap://{{ $name }}-{{ $index0 }}.{{ $name }}-headless.{{ $namespace }}.svc.{{ $cluster }}:{{ $port }} binddn="{{ printf "cn=%s,%s" $bindDNUser $domain }}" bindmethod=simple credentials={{ $configPassword }} searchbase="cn=config" type=refreshAndPersist retry="{{ $retry }} +" timeout={{ $timeout }} starttls={{ $starttls }} tls_reqcert={{ $tls_reqcert }}
   {{- end -}}
 {{- end -}}
 
@@ -161,10 +162,10 @@ Return the proper Openldap init container image name
 Return the list of builtin schema files to mount
 Cannot return list => return string comma separated
 */}}
-{{- define "openldap.builtinSchemaFiles" -}}
+{{- define "openldap.replicationConfigFiles" -}}
   {{- $schemas := "" -}}
   {{- if .Values.replication.enabled -}}
-    {{- $schemas = "syncprov,serverid,csyncprov,rep,bsyncprov,brep,acls" -}}
+    {{- $schemas = "01_syncprov,02_serverid-modify,03_csyncprov-modify,04_rep-modify,05_bsyncprov,06_brep-modify,07_acls-modify" -}}
   {{- else -}}
     {{- $schemas = "acls" -}}
   {{- end -}}
@@ -178,15 +179,6 @@ Cannot return list => return string comma separated
 {{- define "openldap.customSchemaFiles" -}}
   {{- $schemas := "" -}}
   {{- $schemas := ((join "," (.Values.customSchemaFiles | keys))  | replace ".ldif" "") -}}
-  {{- print $schemas -}}
-{{- end -}}
-
-{{/*
-Return the list of all schema files to use
-Cannot return list => return string comma separated
-*/}}
-{{- define "openldap.schemaFiles" -}}
-  {{- $schemas := (include "openldap.builtinSchemaFiles" .) -}}
   {{- print $schemas -}}
 {{- end -}}
 

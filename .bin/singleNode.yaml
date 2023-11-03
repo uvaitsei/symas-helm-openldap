@@ -1,10 +1,12 @@
 logLevel: debug
 env:
+ LDAP_LOGLEVEL: "16640"
  SYMAS_DEBUG: "true"
+ SYMAS_SETUP_DEBUG: "false"
 image:
   # From repository https://hub.docker.com/r/symas/openldap/
   repository: symas/openldap
-  tag: 2.6.6-debian-11-r10
+  tag: 2.6.6-debian-11
   pullPolicy: Always
   pullSecrets: []
 resources:

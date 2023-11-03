@@ -16,6 +16,7 @@ jobs:
       - name: Lint
         shell: bash
         run: |
+          helm dependency update .
           helm lint .
       - name: setup cluster
         shell: bash

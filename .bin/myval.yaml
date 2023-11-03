@@ -1,12 +1,16 @@
 logLevel: debug
 env:
+ LDAP_LOGLEVEL: "16640"
+# LDAP_LOGLEVEL: "-1"
  SYMAS_DEBUG: "true"
+ SYMAS_DEBUG_SETUP: "false"
 image:
   # From repository https://hub.docker.com/r/symas/openldap/
   repository: symas/openldap
-  tag: 2.6.6-debian-11-r10
+#  repository: localhost:5001/openldap
+  tag: 2.6.6-debian-11-r16
+#  tag: test
   pullPolicy: Always
-  pullSecrets: []
 resources:
   limits:
     cpu: "128m"
@@ -17,24 +21,20 @@ service:
   sslLdapPortNodePort: 30636
   type: NodePort
 ltb-passwd:
+  enabled: true
   ingress:
     hosts:
     - "ssl-ldap2.example"
 phpldapadmin:
+  enabled: true
   ingress:
     hosts:
     - "phpldapadmin.example"
 customTLS:
   enabled: true
-  image:
-    repository: alpine/openssl
-    tag: latest
   secret: "custom-cert"
 customSchemaFiles:
   10_owncloud_schema.ldif: |-
-    # This LDIF files describes the ownCloud schema and can be used to
-    # add two optional attributes: ownCloudQuota and ownCloudUUID
-    # The ownCloudUUID is used to store a unique, non-reassignable, persistent identifier for users and groups
     dn: cn=owncloud,cn=schema,cn=config
     objectClass: olcSchemaConfig
     cn: owncloud
@@ -80,3 +80,4 @@ customLdifFiles:
     uid: jdupond
     uidnumber: 1000
     userpassword: {MD5}KOULhzfBhPTq9k7a9XfCGw==
+    ownCloudUUID: 468cb62a-c65f-4512-a38f-46a15afe6a8b
