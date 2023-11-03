@@ -206,14 +206,12 @@ spec:
             - name: replication-config
               mountPath: /docker-entrypoint-initdb.d/{{ $file }}.ldif
               subPath: {{ $file }}.ldif
-              readOnly: true
             {{- end }}
 {{- if .Values.customSchemaFiles}}
             {{- range $file := (include "openldap.customSchemaFiles" . | split ",") }}
             - name: custom-schema-files
               mountPath: /schemas/{{ $file }}.ldif
               subPath: {{ $file }}.ldif
-              readOnly: true
             {{- end }}
 {{- end }}
 {{- if or (.Values.customLdifFiles) (.Values.customLdifCm) }}

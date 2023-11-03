@@ -6,7 +6,7 @@ env:
 image:
   # From repository https://hub.docker.com/r/symas/openldap/
   repository: symas/openldap
-  tag: 2.6.6-debian-11-r11
+  tag: 2.6.6-debian-11
   pullPolicy: Always
   pullSecrets: []
 resources:
