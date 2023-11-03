@@ -120,7 +120,6 @@ EOF
    kubectl create deployment hello-server --image=localhost:5001/hello-app:latest
 EOF
 
-
 fi
 
 if ! $(kubectl get namespace | grep -q projectcontour); then
@@ -139,31 +138,30 @@ if ! $(kubectl get namespace | grep -q chaos-mesh); then
     kubectl --namespace chaos-mesh rollout status deployments
 fi
 
-if ! $(kubectl get namespace | grep -q ${NAMESPACE}); then
-    info "Creating ${NAMESPACE} namespace"
-    kubectl create namespace ${NAMESPACE}
-else
-    info "Uninstall previous deployment of OpenLDAP chart"
-    helm -n ds uninstall openldap
+if $(kubectl get namespace | grep -q ${NAMESPACE}); then
     info "Remove any lingering persistent volume claims in the ${NAMESPACE}"
     kubectl --namespace ${NAMESPACE} delete pvc --all
+    if [ $(helm list --namespace ds --no-headers --short) ]; then
+        info "Uninstall previous deployment of OpenLDAP chart"
+        helm -n ds uninstall openldap
+    fi
     info "Removing namespace ${NAMESPACE}"
     kubectl delete namespace ${NAMESPACE}
-    info "Creating ${NAMESPACE} namespace"
-    kubectl create namespace ${NAMESPACE}
 fi
+info "Creating ${NAMESPACE} namespace"
+kubectl create namespace ${NAMESPACE}
 
-kubectl delete jobs --all-namespaces --field-selector status.successful=1
+#kubectl delete jobs --all-namespaces --field-selector status.successful=1
 
 if ! $(kubectl --namespace $NAMESPACE get secret custom-cert > /dev/null 2>&1); then
     if [ -f "${CERT_DIR}/tls.crt" ] && [ -f "${CERT_DIR}/tls.key" ] && [ -f "${CERT_DIR}/ca.crt" ]
     then :
     else
-	! [ -d "${CERT_DIR}" ] && mkdir -p "${CERT_DIR}"
-	# For "customTLS" we need to provide a certificate, so make one now.
-	info "Creating TLS certs in ${CERT_DIR}"
-	openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN=example.com' -keyout ${CERT_DIR}/tls.key -out ${CERT_DIR}/tls.crt -days 365
-	cp ${CERT_DIR}/tls.crt ${CERT_DIR}/ca.crt
+        ! [ -d "${CERT_DIR}" ] && mkdir -p "${CERT_DIR}"
+        # For "customTLS" we need to provide a certificate, so make one now.
+        info "Creating TLS certs in ${CERT_DIR}"
+        openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN=example.com' -keyout ${CERT_DIR}/tls.key -out ${CERT_DIR}/tls.crt -days 365
+        cp ${CERT_DIR}/tls.crt ${CERT_DIR}/ca.crt
     fi
 
     info "Installing certificate materials into the Kubernets cluster as secrets named 'custom-cert' which we use in the 'myval.yaml' values file."
@@ -174,7 +172,10 @@ if ! $(helm --namespace ${NAMESPACE} list | grep -q openldap); then
     info "Install openldap chart with 'myval.yaml' testing config"
     helm install --namespace ${NAMESPACE} openldap -f .bin/myval.yaml .
     info "waiting for helm deployment to finish..."
-    kubectl --namespace ds rollout status sts openldap
+    # kubectl --namespace ds get events --watch &
+    # ( kubectl --namespace ${NAMESPACE} wait --for=condition=Ready --timeout=30s pod/openldap-0 || \
+    #   kubectl --namespace ${NAMESPACE} logs -l app.kubernetes.io/name=openldap --all-containers=true --timestamps=true --prefix=true --tail=-1 --ignore-errors --follow ) &
+    kubectl --namespace ${NAMESPACE} rollout status sts openldap
 fi
 
 info "Fetch the LDAP admin password from k8s"

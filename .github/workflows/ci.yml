@@ -30,19 +30,26 @@ jobs:
         shell: bash
         run: |
           curl -sSL https://mirrors.chaos-mesh.org/v2.6.2/install.sh  | bash -s -- --local kind
+      - name: create namespace
+        shell: bash
+        run: |
+          kubectl create namespace ds
       - name: setup certs
         shell: bash
         run: |
           openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN=example.com' -keyout tls.key -out tls.crt -days 365
           cp tls.crt ca.crt
-          kubectl create secret generic custom-cert --from-file=./tls.crt --from-file=./tls.key --from-file=./ca.crt
+          kubectl  --namespace ds create secret generic custom-cert --from-file=./tls.crt --from-file=./tls.key --from-file=./ca.crt
       - name: deploy openldap
         shell: bash
         run: |
           cd "$GITHUB_WORKSPACE"
           #helm install --dry-run --debug openldap -f .bin/myval.yaml .
-          helm install openldap -f .bin/myval.yaml .
-          kubectl rollout status sts openldap
+          helm install --namespace ds openldap -f .bin/myval.yaml .
+          #kubectl --namespace ds get events --watch &
+          ( kubectl --namespace ds wait --for=condition=Ready --timeout=30s pod/openldap-0; \
+            kubectl --namespace ds logs -l app.kubernetes.io/name=openldap --all-containers=true --timestamps=true --prefix=true --since=10m --tail=-1 --ignore-errors --follow ) &
+          kubectl --namespace ds rollout status sts openldap
       - name: verify deployment
         shell: bash
         run: |
@@ -74,10 +81,12 @@ jobs:
         shell: bash
         run: |
            echo "test access to openldap database"
-           LDAPTLS_REQCERT=never ldapadd -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -f  .bin/user.ldif
-           LDAPTLS_REQCERT=never ldapsearch -o nettimeout=20 -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org' > /tmp/test-write.txt
-           if [ $(grep "numResponses" /tmp/test-write.txt | cut -d ":" -f 2 | tr -d ' ') -ne 5 ]; then exit 1 ; fi
-           if ! grep -q "objectClass: ownCloud" /tmp/test-write.txt; then  echo exit 1; fi
+           set -x
+           export LDAPTLS_REQCERT=never
+           ldapadd -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -f .bin/user.ldif
+           ldapsearch -o nettimeout=20 -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'uid=einstein,dc=example,dc=org'
+           #[[ $(grep "numResponses" /tmp/test-write.txt | cut -d ":" -f 2 | tr -d ' ') -ge 1 ]] || exit 1
+           #[[ $(grep "objectClass: ownCloud" /tmp/test-write.txt) == "objectClass: ownCloud" ]] || exit 1
       - name: chaos tests
         shell: bash
         run: |

@@ -16,4 +16,4 @@ spec:
     selector:
       labelSelectors:
         app.kubernetes.io/name: openldap-stack-ha
-    value: '66' 
+    value: '66'

@@ -37,4 +37,7 @@ data:
   {{- else }}
   LDAP_CONFIG_ADMIN_ENABLED: "no"
   {{- end }}
+  {{- if .Values.replication.enabled }}
+  LDAP_SYNCPROV_ENABLE: "yes"
+  {{- end }}
 {{ toYaml .Values.env | indent 2 }}

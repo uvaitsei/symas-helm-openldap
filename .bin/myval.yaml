@@ -8,7 +8,7 @@ image:
   # From repository https://hub.docker.com/r/symas/openldap/
   repository: symas/openldap
 #  repository: localhost:5001/openldap
-  tag: 2.6.6-debian-11-r16
+  tag: 2.6.6-debian-11-r17
 #  tag: test
   pullPolicy: Always
 resources:
@@ -80,4 +80,3 @@ customLdifFiles:
     uid: jdupond
     uidnumber: 1000
     userpassword: {MD5}KOULhzfBhPTq9k7a9XfCGw==
-    ownCloudUUID: 468cb62a-c65f-4512-a38f-46a15afe6a8b

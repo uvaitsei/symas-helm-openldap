@@ -16,26 +16,13 @@ metadata:
 {{- end }}
 data:
   # replication
-  01_syncprov.ldif: |
-    # Load syncprov module
-    dn: cn=module,cn=config
-    objectClass: olcModuleList
-    cn: module{0}
-    olcModuleLoad: syncprov
-  02_serverid-modify.ldif: |
+  01_serverid-modify.ldif: |
     # Set server ID
     dn: cn=config
     changeType: modify
     add: olcServerID
     {{- include "olcServerIDs" . }}
-  03_csyncprov-modify.ldif: |
-    # Add syncprov on config
-    dn: olcOverlay=syncprov,olcDatabase={0}config,cn=config
-    changetype: add
-    objectClass: olcOverlayConfig
-    objectClass: olcSyncProvConfig
-    olcOverlay: syncprov
-  04_rep-modify.ldif: |
+  02_rep-modify.ldif: |
     # Add sync replication on config
     dn: olcDatabase={0}config,cn=config
     changetype: modify
@@ -44,13 +31,7 @@ data:
     -
     add: olcMirrorMode
     olcMirrorMode: TRUE
-  05_bsyncprov.ldif: |
-    dn: olcOverlay=syncprov,olcDatabase={2}mdb,cn=config
-    objectClass: olcOverlayConfig
-    objectClass: olcSyncProvConfig
-    olcOverlay: syncprov
-    olcSpSessionLog: 100
-  06_brep-modify.ldif: |
+  03_brep-modify.ldif: |
     dn: olcDatabase={2}mdb,cn=config
     changetype: modify
     add: olcSyncrepl
@@ -61,7 +42,7 @@ data:
     add: olcMirrorMode
     olcMirrorMode: TRUE
   # acls
-  07_acls-modify.ldif: |
+  04_acls-modify.ldif: |
 {{- if .Values.customAcls }}
     {{- .Values.customAcls | nindent 4 }}
 {{- else }}
