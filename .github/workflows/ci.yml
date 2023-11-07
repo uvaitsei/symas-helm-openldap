@@ -92,7 +92,7 @@ jobs:
         shell: bash
         run: |
           cd "$GITHUB_WORKSPACE"
-          helm delete openldap
+          helm delete --namespace ds openldap
           helm install openldap -n single --create-namespace -f .bin/singleNode.yaml .
           kubectl rollout status sts openldap -n single
       - name: verify single node deployment
