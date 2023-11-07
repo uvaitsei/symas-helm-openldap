@@ -55,7 +55,6 @@ customSchemaFiles:
       MAY ( ownCloudQuota $ ownCloudUUID ) )
 customLdifFiles:
   00-root.ldif: |-
-    # Root creation
     dn: dc=example,dc=org
     objectClass: dcObject
     objectClass: organization

@@ -77,26 +77,22 @@ jobs:
         run: |
            echo "test access to openldap database"
            kubectl apply -f .bin/chaos.yaml
-      - name: test write
-        shell: bash
-        run: |
-           echo "test access to openldap database"
-           set -x
-           export LDAPTLS_REQCERT=never
-           ldapadd -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -f .bin/user.ldif
-           ldapsearch -o nettimeout=20 -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'uid=einstein,dc=example,dc=org'
-           #[[ $(grep "numResponses" /tmp/test-write.txt | cut -d ":" -f 2 | tr -d ' ') -ge 1 ]] || exit 1
-           #[[ $(grep "objectClass: ownCloud" /tmp/test-write.txt) == "objectClass: ownCloud" ]] || exit 1
+      - name: run a few basic tests against the openldap cluster
+        run: $GITHUB_WORKSPACE/.bin/tests.sh -d 1000
       - name: chaos tests
         shell: bash
         run: |
            echo "test access to openldap database"
-           for i in {1..30}; do  LDAPTLS_REQCERT=never ldapsearch -o nettimeout=20 -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org' && sleep 60 ; done
+           cd "$GITHUB_WORKSPACE"
+           for i in {1..30}; do
+               LDAPTLS_REQCERT=never ldapsearch -o nettimeout=20 -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org' && sleep 60
+           done
+           LDAPTLS_REQCERT=never ldapmodify -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -f .bin/user-delete.ldif
       - name: deploy openldap-single-node
         shell: bash
         run: |
-          helm delete openldap
           cd "$GITHUB_WORKSPACE"
+          helm delete openldap
           helm install openldap -n single --create-namespace -f .bin/singleNode.yaml .
           kubectl rollout status sts openldap -n single
       - name: verify single node deployment

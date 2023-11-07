@@ -364,15 +364,19 @@ or modify internal configuration (e.g. `cn=config` , `cn=module{0},cn=config`)
 
 ## ChangeLog/Updating
 
-### To 1.0.0
+### 1.0.4
 
-* The Symas fork of the [jp-gouin](https://github.com/jp-gouin/helm-openldap) Helm chart so as to use our containers and provide commercial support.
+* Updated tests
+* 
 
-### To 1.0.2
-
-* The first functional chart using the Symas OpenLDAP container.
-
-### To 1.0.3
+### 1.0.3
 
 * Reviewed by Symas engineers, changes integrated.
 
+### 1.0.2
+
+* The first functional chart using the Symas OpenLDAP container.
+
+### 1.0.0
+
+* The Symas fork of the [jp-gouin](https://github.com/jp-gouin/helm-openldap) Helm chart so as to use our containers and provide commercial support.

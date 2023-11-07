@@ -1,0 +1,2 @@
+dn: uid=einstein,dc=example,dc=org
+changetype: delete
