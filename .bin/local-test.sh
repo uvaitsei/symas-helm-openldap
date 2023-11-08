@@ -5,7 +5,7 @@
 SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
 # Load libraries
-. ${SCRIPTPATH}/liblog.sh
+. "${SCRIPTPATH}"/liblog.sh
 
 set -o errexit
 set -o nounset
@@ -17,7 +17,7 @@ NAMESPACE=ds
 KIND_CLUSTER_NAME=kind
 
 
-if ! $(kind get clusters -q | grep -q $KIND_CLUSTER_NAME); then
+if ! kind get clusters -q | grep -q $KIND_CLUSTER_NAME; then
 
     # 1. Create a Docker registry container unless it already exists
     reg_name='kind-registry'
@@ -122,7 +122,7 @@ EOF
 
 fi
 
-if ! $(kubectl get namespace | grep -q projectcontour); then
+if ! kubectl get namespace | grep -q projectcontour; then
     info "Installing Contour ingress controller with Envoy"
     kubectl apply -f https://projectcontour.io/quickstart/contour.yaml
     # https://kind.sigs.k8s.io/docs/user/ingress/
@@ -131,17 +131,17 @@ if ! $(kubectl get namespace | grep -q projectcontour); then
     kubectl --namespace projectcontour rollout status deployments
 fi
 
-if ! $(kubectl get namespace | grep -q chaos-mesh); then
+if ! kubectl get namespace | grep -q chaos-mesh; then
     info "Installing Chaos Mesh to enable fault simulation within K8S"
     curl -sSL https://mirrors.chaos-mesh.org/v2.6.2/install.sh  | bash -s -- --local kind
     info "waiting for resource deployment to finish..."
     kubectl --namespace chaos-mesh rollout status deployments
 fi
 
-if $(kubectl get namespace | grep -q ${NAMESPACE}); then
+if kubectl get namespace | grep -q "${NAMESPACE}"; then
     info "Remove any lingering persistent volume claims in the ${NAMESPACE}"
     kubectl --namespace ${NAMESPACE} delete pvc --all
-    if [ $(helm list --namespace ds --no-headers --short) ]; then
+    if helm list --namespace ds --no-headers --short | grep -q openldap; then
         info "Uninstall previous deployment of OpenLDAP chart"
         helm -n ds uninstall openldap
     fi
@@ -153,39 +153,36 @@ kubectl create namespace ${NAMESPACE}
 
 #kubectl delete jobs --all-namespaces --field-selector status.successful=1
 
-if ! $(kubectl --namespace $NAMESPACE get secret custom-cert > /dev/null 2>&1); then
+if ! kubectl --namespace $NAMESPACE get secret custom-cert > /dev/null 2>&1; then
     if [ -f "${CERT_DIR}/tls.crt" ] && [ -f "${CERT_DIR}/tls.key" ] && [ -f "${CERT_DIR}/ca.crt" ]
     then :
     else
         ! [ -d "${CERT_DIR}" ] && mkdir -p "${CERT_DIR}"
         # For "customTLS" we need to provide a certificate, so make one now.
         info "Creating TLS certs in ${CERT_DIR}"
-        openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN=example.com' -keyout ${CERT_DIR}/tls.key -out ${CERT_DIR}/tls.crt -days 365
-        cp ${CERT_DIR}/tls.crt ${CERT_DIR}/ca.crt
+        openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN=example.com' -keyout "${CERT_DIR}"/tls.key -out "${CERT_DIR}"/tls.crt -days 365
+        cp "${CERT_DIR}"/tls.crt "${CERT_DIR}"/ca.crt
     fi
 
     info "Installing certificate materials into the Kubernets cluster as secrets named 'custom-cert' which we use in the 'myval.yaml' values file."
-    kubectl --namespace ${NAMESPACE} create secret generic custom-cert --from-file=${CERT_DIR}/tls.crt --from-file=${CERT_DIR}/tls.key --from-file=${CERT_DIR}/ca.crt
+    kubectl --namespace "${NAMESPACE}" create secret generic custom-cert --from-file="${CERT_DIR}"/tls.crt --from-file="${CERT_DIR}"/tls.key --from-file="${CERT_DIR}"/ca.crt
 fi
 
-if ! $(helm --namespace ${NAMESPACE} list | grep -q openldap); then
+if ! helm --namespace "${NAMESPACE}" list | grep -q openldap; then
     info "Install openldap chart with 'myval.yaml' testing config"
-    helm install --namespace ${NAMESPACE} openldap -f .bin/myval.yaml .
+    helm install --namespace "${NAMESPACE}" openldap -f .bin/myval.yaml .
     info "waiting for helm deployment to finish..."
     # kubectl --namespace ds get events --watch &
     # ( kubectl --namespace ${NAMESPACE} wait --for=condition=Ready --timeout=30s pod/openldap-0 || \
     #   kubectl --namespace ${NAMESPACE} logs -l app.kubernetes.io/name=openldap --all-containers=true --timestamps=true --prefix=true --tail=-1 --ignore-errors --follow ) &
-    kubectl --namespace ${NAMESPACE} rollout status sts openldap
+    kubectl --namespace "${NAMESPACE}" rollout status sts openldap
 fi
 
 info "Fetch the LDAP admin password from k8s"
-export LDAP_ADMIN_PASSWORD=$(kubectl get secret --namespace ${NAMESPACE} openldap -o jsonpath="{.data.LDAP_ADMIN_PASSWORD}" | base64 --decode; echo)
-
-# syncmonitor?
-# docker run --rm -ti
+LDAP_ADMIN_PASSWORD=$(kubectl get secret --namespace ${NAMESPACE} openldap -o jsonpath="{.data.LDAP_ADMIN_PASSWORD}" | base64 --decode; echo)
 
 info "Try to find data in our cluster"
-LDAPTLS_REQCERT=never ldapsearch -x -D 'cn=admin,dc=example,dc=org' -w $LDAP_ADMIN_PASSWORD -H ldaps://localhost:30636 -b 'dc=example,dc=org'
+LDAPTLS_REQCERT=never ldapsearch -x -D 'cn=admin,dc=example,dc=org' -w "${LDAP_ADMIN_PASSWORD}" -H ldaps://localhost:30636 -b 'dc=example,dc=org'
 
 # NOTES:
 # * https://kind.sigs.k8s.io/docs/user/local-registry/
