@@ -78,7 +78,7 @@ jobs:
            echo "test access to openldap database"
            kubectl apply -f .bin/chaos.yaml
       - name: run a few basic tests against the openldap cluster
-        run: $GITHUB_WORKSPACE/.bin/tests.sh -d 1000
+        run: $GITHUB_WORKSPACE/.bin/tests.sh -d 100
       - name: chaos tests
         shell: bash
         run: |
