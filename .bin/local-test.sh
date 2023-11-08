@@ -124,6 +124,7 @@ fi
 
 if ! kubectl get namespace | grep -q projectcontour; then
     info "Installing Contour ingress controller with Envoy"
+    # https://tanzu.vmware.com/developer/guides/service-routing-contour-refarch/
     kubectl apply -f https://projectcontour.io/quickstart/contour.yaml
     # https://kind.sigs.k8s.io/docs/user/ingress/
     kubectl patch daemonsets -n projectcontour envoy -p '{"spec":{"template":{"spec":{"nodeSelector":{"ingress-ready":"true"},"tolerations":[{"key":"node-role.kubernetes.io/control-plane","operator":"Equal","effect":"NoSchedule"},{"key":"node-role.kubernetes.io/master","operator":"Equal","effect":"NoSchedule"}]}}}}'
@@ -177,12 +178,6 @@ if ! helm --namespace "${NAMESPACE}" list | grep -q openldap; then
     #   kubectl --namespace ${NAMESPACE} logs -l app.kubernetes.io/name=openldap --all-containers=true --timestamps=true --prefix=true --tail=-1 --ignore-errors --follow ) &
     kubectl --namespace "${NAMESPACE}" rollout status sts openldap
 fi
-
-info "Fetch the LDAP admin password from k8s"
-LDAP_ADMIN_PASSWORD=$(kubectl get secret --namespace ${NAMESPACE} openldap -o jsonpath="{.data.LDAP_ADMIN_PASSWORD}" | base64 --decode; echo)
-
-info "Try to find data in our cluster"
-LDAPTLS_REQCERT=never ldapsearch -x -D 'cn=admin,dc=example,dc=org' -w "${LDAP_ADMIN_PASSWORD}" -H ldaps://localhost:30636 -b 'dc=example,dc=org'
 
 # NOTES:
 # * https://kind.sigs.k8s.io/docs/user/local-registry/

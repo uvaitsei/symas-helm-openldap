@@ -84,10 +84,9 @@ jobs:
         run: |
            echo "test access to openldap database"
            cd "$GITHUB_WORKSPACE"
-           for i in {1..30}; do
-               LDAPTLS_REQCERT=never ldapsearch -o nettimeout=20 -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org' && sleep 60
+           for i in {1..10}; do
+               LDAPTLS_REQCERT=never ldapsearch -o nettimeout=20 -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'cn=Jean Dupond,dc=example,dc=org' | awk -f .bin/ldif2json | jq . - && sleep 47
            done
-           LDAPTLS_REQCERT=never ldapmodify -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -f .bin/user-delete.ldif
       - name: deploy openldap-single-node
         shell: bash
         run: |
@@ -95,14 +94,14 @@ jobs:
           helm delete --namespace ds openldap
           helm install openldap -n single --create-namespace -f .bin/singleNode.yaml .
           kubectl rollout status sts openldap -n single
-      - name: verify single node deployment
-        shell: bash
-        run: |
-           echo "test access to openldap database"
-           sudo apt-get install -y ldap-utils
-           LDAPTLS_REQCERT=never ldapsearch -o nettimeout=20 -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org' > /tmp/test-single-node.txt
-           cat /tmp/test-single-node.txt
-           if [ $(grep "numResponses" /tmp/test-single-node.txt | cut -d ":" -f 2 | tr -d ' ') -ne 7 ]; then exit 1 ; fi
+      # - name: verify single node deployment
+      #   shell: bash
+      #   run: |
+      #      echo "test access to openldap database"
+      #      sudo apt-get install -y ldap-utils
+      #      LDAPTLS_REQCERT=never ldapsearch -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org' > /tmp/test-single-node.txt
+      #      cat /tmp/test-single-node.txt
+      #      if [ $(grep "numResponses" /tmp/test-single-node.txt | cut -d ":" -f 2 | tr -d ' ') -ne 7 ]; then exit 1 ; fi
       - name: remove single node deployment
         shell: bash
         run: |

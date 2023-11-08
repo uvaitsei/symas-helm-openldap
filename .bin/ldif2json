@@ -1,0 +1,133 @@
+#!/usr/bin/env awk -f
+# https://github.com/liutaurasa/ldif2json
+
+function join(array, sep,   result, i)
+{
+    if (sep == "")
+       sep = " "
+    else if (sep == SUBSEP) # magic value
+       sep = ""
+    result = ""
+    for (i in array) {
+        if (result == "") result = array[i]
+        else result = result sep array[i]
+    }
+    return result
+}
+
+function base64_decode(string,  decoded) {
+    cmd="echo -n "string" | base64 -d";
+    cmd| getline decoded
+    close(cmd)
+    return decoded
+}
+
+BEGIN {
+    RS=""
+    FS="\n"
+    ORS=""
+
+    if (! format) {
+        format="dict"
+    }
+
+    # Array of results
+    switch (format) {
+        case "list":
+            print("[")
+            break
+        case "dict":
+            if (key=="") key="dn"
+            # records (objects) count
+            z = 0
+            print("{")
+            break
+        default:
+            printf "format variable is %s\n", format
+            print "Specify format variable with values either list of dict: -v format={list|dict}\n"
+            exit
+    }
+}
+
+{
+    # json_record or json_dict_value array index
+    j = 0
+    json_dict_key = ""
+    delete json_record
+    delete attrs
+    for (i=1; i <= NF; ++i) {
+        if ( $i ~ /^#/ || $i ~ "^version" || $i ~ "^search" || $i ~ "^result") {
+            # Skip comments, version and ldapsearch result entities
+            continue
+        }
+        if ( $i ~ /^[a-zA-Z]*:{1,2} /) {
+            value_count = 0
+            # LDIF may contain base64 encoded attribute values
+            split($i, attr_value, ":{1,2} ", split_with)
+
+            # Decode base64 string
+            if (split_with[1] == ":: " ) attr_value[2] = base64_decode(attr_value[2])
+
+            # Look for multivalue attributes - increase attribute value counter
+            if (attr_value[1] in attrs) {
+                value_count = length(attrs[attr_value[1]])
+            }
+            attrs[attr_value[1]][++value_count] = sprintf("\"%s\"", attr_value[2])
+
+            # Multivalue attributes should be printed as list
+            if (length(attrs[attr_value[1]]) == 1) {
+                json_record[++j] = sprintf("\"%s\":%s", attr_value[1], attrs[attr_value[1]][1])
+            } else if (length(attrs[attr_value[1]]) > 1) {
+                # Multivalue attributes in LDIF printed in a sequence, so use previous j value
+                json_record[j] = sprintf("\"%s\":[%s]", attr_value[1], join(attrs[attr_value[1]], ","))
+            }
+
+        } # End if - field (ldif row) starts with attribute value + : or :: + space
+    } # This is the end of for loop for circling each field (ldif row)
+
+    # Split code path based on json format we want
+    if (length(json_record) > 0) {
+        ++z
+        switch (format) {
+            case "list":
+                if (z == 1) {
+                    printf("\n{%s}", join(json_record, ","))
+                } else {
+                    printf(",\n{%s}", join(json_record, ","))
+                }
+                break
+            case "dict":
+                # Create record's dict key
+                if (key in attrs && json_dict_key == "") {
+                    json_dict_key = sprintf("%s", attrs[key][1])
+
+                    if (z == 1) {
+                        printf("%s:{%s}", json_dict_key, join(json_record, ","))
+                    } else {
+                        printf(",\n%s:{%s}", json_dict_key, join(json_record, ","))
+                    }
+                } else {
+                    printf "\n\nKey %s was not found in parsed LDIF record\n\n", key
+                    for (a in attrs) printf "- %s -- %s\n", a, attrs[a][1]
+                }
+
+                break
+            default:
+                break
+        } # End of switch case
+    }
+
+    # Cancel processing after that number of records
+    if (records > 0 && records <= FNR) {
+        exit
+    }
+}
+
+END {
+  # End of array
+    switch (format) {
+        case "list": print("]\n"); break
+        case "dict": print("}\n"); break
+        default: break
+    }
+}
