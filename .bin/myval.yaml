@@ -30,8 +30,13 @@ phpldapadmin:
   ingress:
     hosts:
     - "phpldapadmin.example"
-customTLS:
-  enabled: true
+initTLSSecret:
+  tls_enabled: true
+  image:
+    registry: docker.io
+    repository: alpine/openssl
+    tag: latest
+    pullPolicy: IfNotPresent
   secret: "custom-cert"
 customSchemaFiles:
   10_owncloud_schema.ldif: |-
