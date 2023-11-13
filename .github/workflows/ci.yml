@@ -16,8 +16,8 @@ jobs:
       - name: Lint
         shell: bash
         run: |
-          helm dependency update .
-          helm lint .
+          helm dependency update charts/openldap
+          helm lint charts/openldap
       - name: setup cluster
         shell: bash
         run: |
