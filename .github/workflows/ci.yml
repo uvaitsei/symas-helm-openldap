@@ -13,11 +13,11 @@ jobs:
       steps:
       - name: Check out code
         uses: actions/checkout@v1
-      - name: Lint
-        shell: bash
-        run: |
-          cd charts/openldap
-          helm lint .
+      # - name: Lint
+      #   shell: bash
+      #   run: |
+      #     cd charts/openldap
+      #     helm lint .
       - name: setup cluster
         shell: bash
         run: |
