@@ -51,40 +51,34 @@ jobs:
       - name: verify deployment
         shell: bash
         run: |
-           echo "test access to openldap database"
            sudo apt-get install -y ldap-utils
            LDAPTLS_REQCERT=never ldapsearch -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org'
-      - name: test phpldapadmin access
-        shell: bash
-        run: |
-           echo "test access to phpldapadmin"
-           echo "127.0.0.1 phpldapadmin.example ssl-ldap2.example" | sudo tee -a /etc/hosts
-           curl phpldapadmin.example:8080
-      - name: test self service pwd access
-        shell: bash
-        run: |
-           echo "test access to ssp"
-           curl ssl-ldap2.example:8080
       - name: verify certs
         shell: bash
         run: |
-           echo "verify certificate"
            openssl s_client -showcerts -connect localhost:30636 </dev/null | grep "issuer=CN = example.com"
       - name: apply chaos tests
         shell: bash
         run: |
-           echo "test access to openldap database"
            kubectl apply -f .bin/chaos.yaml
       - name: run a few basic tests against the openldap cluster
         run: $GITHUB_WORKSPACE/.bin/tests.sh -d 100
       - name: chaos tests
         shell: bash
         run: |
-           echo "test access to openldap database"
            cd "$GITHUB_WORKSPACE"
            for i in {1..10}; do
                LDAPTLS_REQCERT=never ldapsearch -o nettimeout=20 -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'cn=Jean Dupond,dc=example,dc=org' | awk -f .bin/ldif2json | jq . - && sleep 47
            done
+      - name: test phpldapadmin access
+        shell: bash
+        run: |
+           echo "127.0.0.1 phpldapadmin.example ssl-ldap2.example" | sudo tee -a /etc/hosts
+           curl phpldapadmin.example:8080
+      - name: test self service pwd access
+        shell: bash
+        run: |
+           curl ssl-ldap2.example:8080
       - name: deploy openldap-single-node
         shell: bash
         run: |
@@ -95,7 +89,6 @@ jobs:
       # - name: verify single node deployment
       #   shell: bash
       #   run: |
-      #      echo "test access to openldap database"
       #      sudo apt-get install -y ldap-utils
       #      LDAPTLS_REQCERT=never ldapsearch -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org' > /tmp/test-single-node.txt
       #      cat /tmp/test-single-node.txt

@@ -8,7 +8,7 @@ image:
   # From repository https://hub.docker.com/r/symas/openldap/
   repository: symas/openldap
 #  repository: localhost:5001/openldap
-  tag: 2.6.6-debian-11-r18
+  tag: 2.6.6-debian-11-r19
 #  tag: test
   pullPolicy: Always
 resources:
