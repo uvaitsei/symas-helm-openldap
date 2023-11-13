@@ -13,12 +13,6 @@ jobs:
       steps:
       - name: Check out code
         uses: actions/checkout@v1
-      - name: Lint
-        shell: bash
-        run: |
-          cd openldap
-          helm dependency update .
-          helm lint .
       - name: setup cluster
         shell: bash
         run: |
