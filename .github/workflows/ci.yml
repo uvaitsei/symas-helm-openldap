@@ -5,8 +5,7 @@ on:
       - "*"
   pull_request:
     branches:
-      - "master"
-      - "bitnami"
+      - "main"
 jobs:
   qualif:
       runs-on: ubuntu-latest
@@ -44,10 +43,11 @@ jobs:
         shell: bash
         run: |
           cd "$GITHUB_WORKSPACE"
-          helm install --namespace ds openldap -f .bin/myval.yaml .
+          helm install --namespace ds openldap -f .bin/myval.yaml charts/openldap
           kubectl --namespace ds get events --watch &
-          ( kubectl --namespace ds wait --for=condition=Ready --timeout=30s pod/openldap-0; kubectl --namespace ds logs -l app.kubernetes.io/name=openldap --all-containers=true --timestamps=true --prefix=true --since=10m --tail=-1 --ignore-errors --follow ) &
-          kubectl --namespace ds rollout status sts openldap
+          kubectl --namespace ds rollout status sts openldap; ec=$?
+          kubectl --namespace ds logs -l app.kubernetes.io/name=openldap --all-containers=true --timestamps=true --prefix=true --since=6h --tail=-1 --ignore-errors
+          exit $ec
       - name: verify deployment
         shell: bash
         run: |
@@ -84,8 +84,11 @@ jobs:
         run: |
           cd "$GITHUB_WORKSPACE"
           helm delete --namespace ds openldap
-          helm install openldap -n single --create-namespace -f .bin/singleNode.yaml .
-          kubectl rollout status sts openldap -n single
+          helm install openldap -n single --create-namespace -f .bin/singleNode.yaml charts/openldap
+          kubectl --namespace single get events --watch &
+          kubectl --namespace single rollout status sts openldap; ec=$?
+          kubectl --namespace single logs -l app.kubernetes.io/name=openldap --all-containers=true --timestamps=true --prefix=true --since=6h --tail=-1 --ignore-errors
+          exit $ec
       # - name: verify single node deployment
       #   shell: bash
       #   run: |
