@@ -21,12 +21,12 @@ service:
   sslLdapPortNodePort: 30636
   type: NodePort
 ltb-passwd:
-  enabled: false
+  enabled: true
   ingress:
     hosts:
     - "ssl-ldap2.example"
 phpldapadmin:
-  enabled: false
+  enabled: true
   ingress:
     hosts:
     - "phpldapadmin.example"

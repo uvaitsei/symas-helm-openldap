@@ -13,11 +13,11 @@ jobs:
       steps:
       - name: Check out code
         uses: actions/checkout@v1
-      # - name: Lint
-      #   shell: bash
-      #   run: |
-      #     cd charts/openldap
-      #     helm lint .
+      - name: Lint
+        shell: bash
+        run: |
+          helm deps up openldap
+          helm lint openldap
       - name: setup cluster
         shell: bash
         run: |
@@ -26,10 +26,6 @@ jobs:
           /tmp/kind create cluster --config=$GITHUB_WORKSPACE/.bin/kind-conf.yml --image=kindest/node:v1.28.0@sha256:9f3ff58f19dcf1a0611d11e8ac989fdb30a28f40f236f59f0bea31fb956ccf5c
           kubectl apply -f https://projectcontour.io/quickstart/contour.yaml
           kubectl patch daemonsets -n projectcontour envoy -p '{"spec":{"template":{"spec":{"nodeSelector":{"ingress-ready":"true"},"tolerations":[{"key":"node-role.kubernetes.io/control-plane","operator":"Equal","effect":"NoSchedule"},{"key":"node-role.kubernetes.io/master","operator":"Equal","effect":"NoSchedule"}]}}}}'
-      - name: setup chaos mesh
-        shell: bash
-        run: |
-          curl -sSL https://mirrors.chaos-mesh.org/v2.6.2/install.sh  | bash -s -- --local kind
       - name: create namespace
         shell: bash
         run: |
@@ -44,7 +40,7 @@ jobs:
         shell: bash
         run: |
           cd "$GITHUB_WORKSPACE"
-          helm install --namespace ds openldap -f .bin/myval.yaml charts/openldap
+          helm install --namespace ds openldap -f .bin/myval.yaml openldap
           kubectl --namespace ds get events --watch &
           kubectl --namespace ds rollout status sts openldap; ec=$?
           kubectl --namespace ds logs -l app.kubernetes.io/name=openldap --all-containers=true --timestamps=true --prefix=true --since=6h --tail=-1 --ignore-errors
@@ -58,6 +54,10 @@ jobs:
         shell: bash
         run: |
            openssl s_client -showcerts -connect localhost:30636 </dev/null | grep "issuer=CN = example.com"
+      - name: setup chaos mesh
+        shell: bash
+        run: |
+          curl -sSL https://mirrors.chaos-mesh.org/v2.6.2/install.sh  | bash -s -- --local kind
       - name: apply chaos tests
         shell: bash
         run: |
@@ -85,7 +85,7 @@ jobs:
         run: |
           cd "$GITHUB_WORKSPACE"
           helm delete --namespace ds openldap
-          helm install openldap -n single --create-namespace -f .bin/singleNode.yaml charts/openldap
+          helm install openldap -n single --create-namespace -f .bin/singleNode.yaml openldap
           kubectl --namespace single get events --watch &
           kubectl --namespace single rollout status sts openldap; ec=$?
           kubectl --namespace single logs -l app.kubernetes.io/name=openldap --all-containers=true --timestamps=true --prefix=true --since=6h --tail=-1 --ignore-errors

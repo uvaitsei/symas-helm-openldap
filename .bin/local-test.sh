@@ -171,7 +171,7 @@ fi
 
 if ! helm --namespace "${NAMESPACE}" list | grep -q openldap; then
     info "Install openldap chart with 'myval.yaml' testing config"
-    helm install --namespace "${NAMESPACE}" openldap -f .bin/myval.yaml charts/openldap
+    helm install --namespace "${NAMESPACE}" openldap -f .bin/myval.yaml openldap
     info "waiting for helm deployment to finish..."
     # kubectl --namespace ds get events --watch &
     # ( kubectl --namespace ${NAMESPACE} wait --for=condition=Ready --timeout=30s pod/openldap-0 || \
