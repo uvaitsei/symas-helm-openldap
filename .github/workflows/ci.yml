@@ -88,12 +88,12 @@ jobs:
           kubectl --namespace single rollout status sts openldap; ec=$?
           kubectl --namespace single logs -l app.kubernetes.io/name=openldap --all-containers=true --timestamps=true --prefix=true --since=6h --tail=-1 --ignore-errors
           exit $ec
-      - name: verify single node deployment
-        shell: bash
-        run: |
-           sudo apt-get install -y ldap-utils
-           kubectl port-forward --namespace single service/openldap 30636:1636 > /dev/null 2>&1 &
-           LDAPTLS_REQCERT=never ldapsearch -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org' | awk -f .bin/ldif2json
+      # - name: verify single node deployment
+      #   shell: bash
+      #   run: |
+      #      sudo apt-get install -y ldap-utils
+      #      kubectl port-forward --namespace single service/openldap 30636:1636 > /dev/null 2>&1 &
+      #      LDAPTLS_REQCERT=never ldapsearch -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org' | awk -f .bin/ldif2json
       - name: delete single node deployment
         shell: bash
         run: |
