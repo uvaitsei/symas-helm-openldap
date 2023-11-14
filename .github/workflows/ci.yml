@@ -92,7 +92,7 @@ jobs:
         shell: bash
         run: |
            sudo apt-get install -y ldap-utils
-           LDAPTLS_REQCERT=never ldapsearch -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org' | .bin/ldif2json
+           LDAPTLS_REQCERT=never ldapsearch -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org' | awk -f .bin/ldif2json
       - name: delete single node deployment
         shell: bash
         run: |
