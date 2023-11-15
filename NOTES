@@ -1,0 +1,15 @@
+TODO:
+* local-test.sh
+  * chaos mesh seems broken
+  * project envoy isn't working
+  * fix TLS
+* syncprov
+
+https://stackoverflow.com/questions/67903732/custom-load-balancing-in-kubernetes
+
+https://medium.com/nuvo-group-tech/move-your-certs-to-helm-4f5f61338aca
+
+git config --local --add alias.changed-files '!f() { git diff --stat --name-only $1^ $1 | xargs git ls-tree --full-tree  $1 ; }; f'
+git changed-files $(git rev-parse HEAD~10)
+
+kubectl delete jobs --all-namespaces --field-selector status.successful=1

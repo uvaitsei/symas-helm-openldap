@@ -120,6 +120,7 @@ data:
 	mail: foo@mydomain.com
 	userPassword:: {SSHA}xxxxxxxxx
 ```
+
 Now create a secret for the passwords:
 ```yaml
 kind: Secret

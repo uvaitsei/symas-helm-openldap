@@ -36,7 +36,7 @@ if ! kind get clusters -q | grep -q $KIND_CLUSTER_NAME; then
     # https://github.com/containerd/containerd/blob/main/docs/cri/config.md#registry-configuration
     # See: https://github.com/containerd/containerd/blob/main/docs/hosts.md
     info "Creating a Kind/Kubernetes cluster"
-    cat <<EOF | kind create cluster --name $KIND_CLUSTER_NAME --image=kindest/node:v1.28.0@sha256:9f3ff58f19dcf1a0611d11e8ac989fdb30a28f40f236f59f0bea31fb956ccf5c --config=-
+    cat <<EOF | kind create cluster --name $KIND_CLUSTER_NAME --image=kindest/node:v1.29.4@sha256:3abb816a5b1061fb15c6e9e60856ec40d56b7b52bcea5f5f1350bc6e2320b6f8 --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
@@ -127,25 +127,29 @@ if ! kubectl get namespace | grep -q projectcontour; then
     # https://tanzu.vmware.com/developer/guides/service-routing-contour-refarch/
     kubectl apply -f https://projectcontour.io/quickstart/contour.yaml
     # https://kind.sigs.k8s.io/docs/user/ingress/
-    kubectl patch daemonsets -n projectcontour envoy -p '{"spec":{"template":{"spec":{"nodeSelector":{"ingress-ready":"true"},"tolerations":[{"key":"node-role.kubernetes.io/control-plane","operator":"Equal","effect":"NoSchedule"},{"key":"node-role.kubernetes.io/master","operator":"Equal","effect":"NoSchedule"}]}}}}'
+    kubectl patch daemonsets -n projectcontour envoy -p '{"spec":{"template":{"spec":{"nodeSelector":{"ingress-ready":"true"}}}}}'
     info "waiting for resource deployment to finish..."
     kubectl --namespace projectcontour rollout status deployments
 fi
 
 if ! kubectl get namespace | grep -q chaos-mesh; then
-    info "Installing Chaos Mesh to enable fault simulation within K8S"
-    curl -sSL https://mirrors.chaos-mesh.org/v2.6.2/install.sh  | bash -s -- --local kind
+    # see: https://chaos-mesh.org/
+    helm repo add chaos-mesh https://charts.chaos-mesh.org
+    kubectl create ns chaos-mesh
+    helm install chaos-mesh chaos-mesh/chaos-mesh -n=chaos-mesh --set chaosDaemon.runtime=containerd --set chaosDaemon.socketPath=/run/k3s/containerd/containerd.sock --version 2.6.3
+
     info "waiting for resource deployment to finish..."
     kubectl --namespace chaos-mesh rollout status deployments
+    kubectl --namespace chaos-mesh get po
 fi
 
 if kubectl get namespace | grep -q "${NAMESPACE}"; then
+    if helm list --namespace ${NAMESPACE} --no-headers --short | grep -q openldap; then
+        info "Uninstall previous deployment of OpenLDAP chart"
+        helm -n ${NAMESPACE} uninstall openldap
+    fi
     info "Remove any lingering persistent volume claims in the ${NAMESPACE}"
     kubectl --namespace ${NAMESPACE} delete pvc --all
-    if helm list --namespace ds --no-headers --short | grep -q openldap; then
-        info "Uninstall previous deployment of OpenLDAP chart"
-        helm -n ds uninstall openldap
-    fi
     info "Removing namespace ${NAMESPACE}"
     kubectl delete namespace ${NAMESPACE}
 fi
@@ -154,28 +158,31 @@ kubectl create namespace ${NAMESPACE}
 
 #kubectl delete jobs --all-namespaces --field-selector status.successful=1
 
-if ! kubectl --namespace $NAMESPACE get secret custom-cert > /dev/null 2>&1; then
+if ! kubectl --namespace ${NAMESPACE} get secret myval-certs > /dev/null 2>&1; then
     if [ -f "${CERT_DIR}/tls.crt" ] && [ -f "${CERT_DIR}/tls.key" ] && [ -f "${CERT_DIR}/ca.crt" ]
     then :
     else
         ! [ -d "${CERT_DIR}" ] && mkdir -p "${CERT_DIR}"
-        # For "customTLS" we need to provide a certificate, so make one now.
+        # For "initTLSSecret" we need to provide a certificate, so make one now.
         info "Creating TLS certs in ${CERT_DIR}"
-        openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN=example.com' -keyout "${CERT_DIR}"/tls.key -out "${CERT_DIR}"/tls.crt -days 365 > /dev/null 2>&1
+        openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN=example.org' -keyout "${CERT_DIR}"/tls.key -out "${CERT_DIR}"/tls.crt -days 365 > /dev/null 2>&1
         cp "${CERT_DIR}"/tls.crt "${CERT_DIR}"/ca.crt
     fi
 
-    info "Installing certificate materials into the Kubernets cluster as secrets named 'custom-cert' which we use in the 'myval.yaml' values file."
-    kubectl --namespace "${NAMESPACE}" create secret generic custom-cert --from-file="${CERT_DIR}"/tls.crt --from-file="${CERT_DIR}"/tls.key --from-file="${CERT_DIR}"/ca.crt
+    info "Installing certificate materials into the Kubernets cluster as secrets named 'myval-certs' which we use in the 'myval.yaml' values file."
+    kubectl --namespace "${NAMESPACE}" create secret generic myval-certs --from-file="${CERT_DIR}"/tls.crt --from-file="${CERT_DIR}"/tls.key --from-file="${CERT_DIR}"/ca.crt
+    # kubectl get secret myval-certs -n "${NAMESPACE}" -o yaml
 fi
 
 if ! helm --namespace "${NAMESPACE}" list | grep -q openldap; then
     info "Install openldap chart with 'myval.yaml' testing config"
-    helm install --namespace "${NAMESPACE}" openldap -f .bin/myval.yaml openldap
+    helm install --namespace "${NAMESPACE}" --values .bin/myval.yaml openldap .
+    #kubectl --namespace ds create secret generic my-super-secret --from-literal=LDAP_ADMIN_PASSWORD=Not@SecurePassw0rd --from-literal=LDAP_CONFIG_ADMIN_PASSWORD=Not@SecurePassw0rd
+    #helm install --namespace "${NAMESPACE}" --values .bin/singleNode.yaml openldap .
     info "waiting for helm deployment to finish..."
-    # kubectl --namespace ds get events --watch &
-    # ( kubectl --namespace ${NAMESPACE} wait --for=condition=Ready --timeout=30s pod/openldap-0 || \
-    #   kubectl --namespace ${NAMESPACE} logs -l app.kubernetes.io/name=openldap --all-containers=true --timestamps=true --prefix=true --tail=-1 --ignore-errors --follow ) &
+     kubectl --namespace ${NAMESPACE} get events --watch &
+     ( kubectl --namespace ${NAMESPACE} wait --for=condition=Ready --timeout=30s pod/openldap-0 || \
+       kubectl --namespace ${NAMESPACE} logs -l app.kubernetes.io/name=openldap --all-containers=true --timestamps=true --prefix=true --tail=-1 --ignore-errors --follow ) &
     kubectl --namespace "${NAMESPACE}" rollout status sts openldap
 fi
 

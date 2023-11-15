@@ -1,0 +1,12 @@
+dn: cn=John Doe,dc=example,dc=org
+cn: John Doe
+gidnumber: 400
+givenname: John
+homedirectory: /home/users/jdoe
+objectclass: inetOrgPerson
+objectclass: posixAccount
+objectclass: top
+sn: Doe
+uid: jdoe
+uidnumber: 9001
+userpassword: {MD5}KOULhzfBhPTq9k7a9XfCGw==

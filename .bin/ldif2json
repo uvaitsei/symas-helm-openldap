@@ -107,8 +107,8 @@ BEGIN {
                         printf(",\n%s:{%s}", json_dict_key, join(json_record, ","))
                     }
                 } else {
-                    printf "\n\nKey %s was not found in parsed LDIF record\n\n", key
-                    for (a in attrs) printf "- %s -- %s\n", a, attrs[a][1]
+                    #printf "\n\nKey %s was not found in parsed LDIF record\n\n", key
+                    #for (a in attrs) printf "- %s -- %s\n", a, attrs[a][1]
                 }
 
                 break

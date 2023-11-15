@@ -1,14 +1,20 @@
 logLevel: debug
 env:
  LDAP_LOGLEVEL: "16640"
+# LDAP_LOGLEVEL: "-1"
  SYMAS_DEBUG: "true"
- SYMAS_SETUP_DEBUG: "false"
+ SYMAS_DEBUG_SETUP: "false"
 image:
   # From repository https://hub.docker.com/r/symas/openldap/
   repository: symas/openldap
-  tag: 2.6.6-debian-11
+#  repository: localhost:5001/openldap
+  tag: 2.6.8
+#  tag: test
   pullPolicy: Always
   pullSecrets: []
+global:
+  ldapDomain: "singlenode.org"
+  existingSecret: "my-super-secret"
 resources:
   limits:
     cpu: "128m"
@@ -21,12 +27,14 @@ ltb-passwd:
     hosts:
     - "ssl-ldap2.example"
 phpldapadmin:
-  ingress:
-    hosts:
-    - "phpldapadmin.example"
-customTLS:
   enabled: false
+  readinessProbe:
+    enabled: false
+  livenessProbe:
+    enabled: false
 service:
-  ldapPortNodePort: 30389
+  enableLdapPort: false
   sslLdapPortNodePort: 30636
   type: NodePort
+initTLSSecret:
+  tls_enabled: true

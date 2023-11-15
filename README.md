@@ -102,8 +102,8 @@ Global parameters to configure the deployment of the application.
 | `global.configUserEnabled`                     |  Whether to create a configuration admin user                                                                                                                       | `true`                 |
 | `global.configUser`                     |  Openldap configuration admin user                                                                                                                       | `admin`                 |
 | `global.configPassword`                     | Configuration password of OpenLDAP                                                                                                                        | `Not@SecurePassw0rd`                 |
-| `global.ldapPort`                     | Ldap port                                                                                                                         | `389`                 |
-| `global.sslLdapPort`                     | Ldaps port                                                                                                                         | `636`                 |
+| `global.ldapPort`                     | Ldap port                                                                                                                         | `1389`                 |
+| `global.sslLdapPort`                     | Ldaps port                                                                                                                         | `1636`                 |
 
 ### Application parameters
 
@@ -116,8 +116,8 @@ Parameters related to the configuration of the application.
 | `userPasswords`          | User password to create (comma seprated list)  | "" |
 | `group`          | Group to create and add list of user above | "" |
 | `env`                              | [Environment variables](https://github.com/symas/containers/tree/main/openldap) as a list of key value pairs available within the container. | `[see values.yaml]` |
-| `customTLS.enabled`                      | Set to enable TLS/LDAPS with custom certificate - should also set `tls.secret`                                                                                    | `false`             |
-| `customTLS.secret`                       | Secret containing TLS cert and key must contain the keys `tls.key` , `tls.crt` and `ca.crt`                                                                       | `""`                |
+| `initTLSSecret.tls_enabled`                      | Set to enable TLS/LDAPS with custom certificate - should also set `tls.secret`                                                                                    | `false`             |
+| `initTLSSecret.secret`                       | Secret containing TLS cert and key must contain the keys `tls.key` , `tls.crt` and `ca.crt`                                                                       | `""`                |
 | `customSchemaFiles` | Custom OpenLDAP schema files used in addition to default schemas                                                                    | `""`                |
 | `customLdifFiles`                       | Custom OpenLDAP configuration files used to override default settings                                                                      | `""`                |
 | `customLdifCm`                       | Existing configmap with custom ldif. Can't be use with customLdifFiles                                                            | `""`                |
@@ -170,7 +170,10 @@ Parameters related to Kubernetes.
 | `extraDeploy`                   | extraDeploy Array of extra objects to deploy with the release                                                                                | `""`                |
 | `service.annotations`              | Annotations to add to the service                                                                                                         | `{}`                |
 | `service.externalIPs`              | Service external IP addresses                                                                                                             | `[]`                |
+| `service.enableLdapPort`                 | Enable LDAP port on the service and headless service                                                                                | `true`              |
+| `service.enableSslLdapPort`                 | Enable SSL LDAP port on the service and headless service                                                                         | `true`              |
 | `service.ldapPortNodePort`                 | Nodeport of External service port for LDAP if service.type is NodePort                                                                                                            | `nil`               |
+| `service.clusterIP`                 | Static cluster IP to assign to the service (if supported)                                                            | `nil`              |
 | `service.loadBalancerIP`           | IP address to assign to load balancer (if supported)                                                                                      | `""`                |
 | `service.loadBalancerSourceRanges` | List of IP CIDRs allowed access to load balancer (if supported)                                                                           | `[]`                |
 | `service.sslLdapPortNodePort`                 | Nodeport of External service port for SSL if service.type is NodePort                                                                                                            | `nil`               |
@@ -280,16 +283,39 @@ and unused in your Kubernetes cluster.
 $ kubectl delete pvc -l release=${RELEASE-NAME}
 ```
 
-## Custom secret
+## Custom Secret
 
 Override the default `LDAP_ADMIN_PASSWORD` and `LDAP_CONFIG_ADMIN_PASSWORD` by
 creating a Kubernetes secret referenced by `global.existingSecret` to override
 the default secret.yaml provided.  That will then trigger an init container that
 will replace occurrences of `%%CONFIG_PASSWORD%%` with the
 `LDAP_CONFIG_PASSWORD` and `%%ADMIN_PASSWORD%%` with the `LDAP_ADMIN_PASSWORD`
-in any `.ldif` files found in the `/custom_config` or `/cm-schemas-acls`
+in any `.ldif` files found in the `/custom-config` or `/cm-schemas-acls`
 directories before starting `slapd`.
 
+## Scaling your cluster
+In order to scale the cluster, first use `helm` to updrgade the number of `replica`
+```
+helm upgrade -n openldap-ha --set replicaCount=4 openldap-ha .
+```
+Then connect to the `<openldap>-0` container, under `/schemas/`, edit :
+ 1. `serverid.ldif` and remove existing `olcServerID` (only keep the one you added by scaling)
+ 2. `brep.ldif` and remove existing `olcServerID` (only keep the one you added by scaling)
+ 3. Apply your changes
+
+```
+ldapmodify -Y EXTERNAL -H ldapi:/// -f /tmp/serverid.ldif
+ldapmodify -Y EXTERNAL -H ldapi:/// -f /tmp/brep.ldif
+```
+
+Tips : to edit in the container, use :
+```
+cat <<EOF > /tmp/serverid.ldif
+copy
+your
+line
+EOF
+```
 
 ## Troubleshoot
 
@@ -303,9 +329,9 @@ or in [OpenLDAP documentation](https://www.openldap.org/doc/admin26/slapdconfig.
 ### Log Levels
 | Level | Keyword | Description |
 | ----- | ------- | ----------- |
-| -1 | any	| enable all debugging |
-| 0	| 	no debugging |
-| 1 |	(`0x1` trace)	| trace function calls |
+| -1	| any	| enable all debugging |
+| 0	| no debugging	|
+| 1	| (`0x1` trace)	| trace function calls |
 | 2	| (`0x2` packets)	| debug packet handling |
 | 4	| (`0x4` args)	| heavy trace debugging |
 | 8	| (`0x8` conns)	| connection management |
@@ -363,6 +389,10 @@ objectclass: organization
 or modify internal configuration (e.g. `cn=config` , `cn=module{0},cn=config`)
 
 ## ChangeLog/Updating
+
+### 1.1.0
+
+* Sync'ed with jp-gouin@4.2.5
 
 ### 1.0.4
 
