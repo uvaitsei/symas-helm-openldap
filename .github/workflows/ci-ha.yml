@@ -7,20 +7,21 @@ jobs:
     steps:
     - name: Check out code
       uses: actions/checkout@v3
-    - name: Setup Kind/K8S Cluster
+    - name: Run custom action
+      # Use the location in the repository (without action.yml)
       uses: ./.github/actions/setup
       with:
         install-chaos: true
+    - name: Setup TLS Certificates
+      shell: bash
+      run: |
+        openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN=example.com' -keyout tls.key -out tls.crt -days 365
+        cp tls.crt ca.crt
+        kubectl create secret generic secret-certs --from-file=./tls.crt --from-file=./tls.key --from-file=./ca.crt
     - name: Create namespace
       shell: bash
       run: |
         kubectl create namespace ds
-    - name: Setup TLS Certificates
-      shell: bash
-      run: |
-        openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN=example.org' -keyout tls.key -out tls.crt -days 365
-        cp tls.crt ca.crt
-        kubectl --namespace ds create secret generic myval-certs --from-file=./tls.crt --from-file=./tls.key --from-file=./ca.crt
     - name: Deploy OpenLDAP cluster
       shell: bash
       run: |
@@ -29,40 +30,59 @@ jobs:
         kubectl --namespace ds rollout status sts openldap; ec=$?
         kubectl --namespace ds logs -l app.kubernetes.io/name=openldap --all-containers=true --timestamps=true --prefix=true --since=6h --tail=-1 --ignore-errors
         exit $ec
-    - name: Test OpenLDAP database via TLS
-      uses: ./.github/actions/tls-access
-      with:
-        port: 30636
-    # - name: MemberOf test to OpenLDAP database
-    #   shell: bash
-    #   run: |
-    #       ( LDAPTLS_REQCERT=never ldapsearch -o nettimeout=20 -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org' "(memberOf=cn=testgroup,ou=Group,dc=example,dc=org)" | tee /tmp/test-write.txt | awk -f .bin/ldif2json | jq ) || /bin/true
-    #       responses=$(grep "numResponses" /tmp/test-write.txt | cut -d ":" -f 2 | tr -d ' ')
-    #       [ $responses -lt 2 ] || exit 1
-    #       grep -q "uid=test1,ou=People,dc=example,dc=org" /tmp/test-write.txt || exit 1
+    - name: Verify deployment
+      shell: bash
+      run: |
+          echo "Test access to OpenLDAP database"
+          sleep 10
+          LDAPTLS_REQCERT=never ldapsearch -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org'
+    - name: Validate searching
+      shell: bash
+      run: |
+         for i in {1..10}; do
+             LDAPTLS_REQCERT=never ldapsearch -o nettimeout=20 -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'cn=Jean Dupond,dc=example,dc=org' | awk -f .bin/ldif2json | jq . - && sleep 47
+         done
+    - name: Run tests against the OpenLDAP cluster
+      run: $GITHUB_WORKSPACE/.bin/tests.sh -d 100
     - name: Test PhpLdapAdmin access
       shell: bash
       run: |
+          echo "Test access to PhpLdapAdmin"
           echo "127.0.0.1 phpldapadmin.example ssl-ldap2.example" | sudo tee -a /etc/hosts
           curl phpldapadmin.example:8080
     - name: Validate self service pwd access
       shell: bash
       run: |
+          echo "Validate access to ssp"
           curl ssl-ldap2.example:8080
-    - name: Verify TLS Certificate Materials
+    - name: Verify certs
       shell: bash
       run: |
-          echo | openssl s_client -showcerts -servername example.org -connect localhost:30636 2>/dev/null | openssl x509 -inform pem -noout -text > /tmp/test-cert.txt
-          if ! grep -q "CN = example.org" /tmp/test-cert.txt; then  echo exit 1; fi
-    - name: Run tests against the OpenLDAP cluster
-      run: .bin/tests.sh -d 100
-    - name: Enable chaos within cluster to test cluster resiliance
+          echo "Verify certificate"
+          echo | openssl s_client -showcerts -servername example.com -connect localhost:30636 2>/dev/null | openssl x509 -inform pem -noout -text > /tmp/test-cert.txt
+          if ! grep -q "CN = example.com" /tmp/test-cert.txt; then  echo exit 1; fi
+    - name: Apply chaos tests
       shell: bash
       run: |
+          echo "test access to OpenLDAP database"
           kubectl apply -f .bin/chaos.yaml
-#    - name: Run tests again, now amid chaos
-#      run: .bin/tests.sh -d 100
-    - name: Extended testing over a period of 20 minutes amid chaos
+    - name: Test writes amid chaos
       shell: bash
       run: |
+          echo "Write test to OpenLDAP database"
+          LDAPTLS_REQCERT=never ldapadd -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -f  .bin/user.ldif
+          LDAPTLS_REQCERT=never ldapsearch -o nettimeout=20 -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org' > /tmp/test-write.txt
+          if ! grep  "Einstein" /tmp/test-write.txt; then echo 'no Einstein entry found' ; fi
+          if ! grep  "objectClass: ownCloud" /tmp/test-write.txt; then  echo 'no ownCloud entry found'; fi
+    - name: test memberOf
+      shell: bash
+      run: |
+          echo "MemberOf test to OpenLDAP database"
+          LDAPTLS_REQCERT=never ldapsearch -o nettimeout=20 -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org' "(memberOf=cn=testgroup,ou=Group,dc=example,dc=org)" > /tmp/test-write.txt
+          if [ $(grep "numResponses" /tmp/test-write.txt | cut -d ":" -f 2 | tr -d ' ') -ne 2 ]; then exit 1 ; fi
+          if ! grep -q "uid=test1,ou=People,dc=example,dc=org" /tmp/test-write.txt; then  echo exit 1; fi
+    - name: chaos tests
+      shell: bash
+      run: |
+          echo "Test access to OpenLDAP database over a period of 20 minutes..."
           for i in {1..20}; do echo $i of 20; LDAPTLS_REQCERT=never ldapsearch -o nettimeout=20 -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org' > /dev/null && sleep 60 ; done

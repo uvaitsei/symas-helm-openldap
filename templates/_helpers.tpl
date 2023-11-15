@@ -78,6 +78,7 @@ Generate olcSyncRepl list
 {{- $starttls := .Values.replication.starttls }}
 {{- $tls_reqcert := .Values.replication.tls_reqcert }}
 {{- $nodeCount := .Values.replicaCount | int }}
+{{- $port := .Values.service.ldapPort | int }}
   {{- range $index0 := until $nodeCount }}
     {{- $index1 := $index0 | add1 }}
     olcSyncRepl: rid=00{{ $index1 }} provider=ldap://{{ $name }}-{{ $index0 }}.{{ $name }}-headless.{{ $namespace }}.svc.{{ $cluster }}:1389 binddn="{{ printf "cn=%s,%s" $bindDNUser $domain }}" bindmethod=simple credentials={{ $configPassword }} searchbase="cn=config" type=refreshAndPersist retry="{{ $retry }} +" timeout={{ $timeout }} starttls={{ $starttls }} tls_reqcert={{ $tls_reqcert }}
@@ -162,7 +163,7 @@ Return the proper OpenLDAP init container image name
 {{- end -}}
 
 {{/*
-Return the proper OpenLDAP volume permissions init container image name
+Return the proper Openldap volume permissions init container image name
 */}}
 {{- define "openldap.volumePermissionsImage" -}}
 {{- include "common.images.image" (dict "imageRoot" .Values.volumePermissions.image "global" .Values.global) -}}
@@ -175,6 +176,11 @@ Cannot return list => return string comma separated
 */}}
 {{- define "openldap.builtinSchemaFiles" -}}
   {{- $schemas := "" -}}
+  {{- if .Values.replication.enabled -}}
+    {{- $schemas = "syncprov,serverid,csyncprov,rep,bsyncprov,brep,acls" -}}
+  {{- else -}}
+    {{- $schemas = "acls" -}}
+  {{- end -}}
   {{- print $schemas -}}
 {{- end -}}
 
@@ -208,6 +214,10 @@ Cannot return list => return string comma separated
 */}}
 {{- define "openldap.schemaFiles" -}}
   {{- $schemas := (include "openldap.builtinSchemaFiles" .) -}}
+  {{- $custom_schemas := (include "openldap.customSchemaFiles" .) -}}
+  {{- if gt (len $custom_schemas) 0 -}}
+    {{- $schemas = print $schemas "," $custom_schemas  -}}
+  {{- end -}}
   {{- print $schemas -}}
 {{- end -}}
 

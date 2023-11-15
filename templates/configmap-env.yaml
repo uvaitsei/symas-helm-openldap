@@ -19,9 +19,6 @@ metadata:
 data:
   LDAP_ROOT: {{ include "global.baseDomain" . }}
   LDAP_EXTRA_SCHEMAS: {{ print "cosine,inetorgperson,nis," (include "openldap.schemaFiles" .) }}
-  LDAP_CUSTOM_SCHEMA_DIR: /custom-schemas
-  LDAP_CUSTOM_LDIF_DIR: /custom-ldifs
-  LDAP_ENTRYPOINT_INITDB_D_DIR: /custom-config
   {{- if .Values.users }}
   LDAP_USERS: {{ .Values.users }}
   {{- end }}

@@ -21,10 +21,6 @@
 .chaos
 .argo-workflow
 .bin
-.direnv
-.envrc
 advanced_examples
-flake.nix
-flake.lock
 shell.nix
 

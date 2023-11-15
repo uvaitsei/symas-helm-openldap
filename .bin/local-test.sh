@@ -55,9 +55,9 @@ nodes:
   - containerPort: 443
     hostPort: 8443
     protocol: TCP
-  - containerPort: 30636
+  - containerPort: 3636
     hostPort: 30636
-  - containerPort: 30389
+  - containerPort: 3389
     hostPort: 30389
 - role: worker
 - role: worker
@@ -158,7 +158,7 @@ kubectl create namespace ${NAMESPACE}
 
 #kubectl delete jobs --all-namespaces --field-selector status.successful=1
 
-if ! kubectl --namespace ${NAMESPACE} get secret myval-certs > /dev/null 2>&1; then
+if ! kubectl --namespace $NAMESPACE get secret secret-certs > /dev/null 2>&1; then
     if [ -f "${CERT_DIR}/tls.crt" ] && [ -f "${CERT_DIR}/tls.key" ] && [ -f "${CERT_DIR}/ca.crt" ]
     then :
     else
@@ -169,16 +169,14 @@ if ! kubectl --namespace ${NAMESPACE} get secret myval-certs > /dev/null 2>&1; t
         cp "${CERT_DIR}"/tls.crt "${CERT_DIR}"/ca.crt
     fi
 
-    info "Installing certificate materials into the Kubernets cluster as secrets named 'myval-certs' which we use in the 'myval.yaml' values file."
-    kubectl --namespace "${NAMESPACE}" create secret generic myval-certs --from-file="${CERT_DIR}"/tls.crt --from-file="${CERT_DIR}"/tls.key --from-file="${CERT_DIR}"/ca.crt
-    # kubectl get secret myval-certs -n "${NAMESPACE}" -o yaml
+    info "Installing certificate materials into the Kubernets cluster as secrets named 'secret-certs' which we use in the 'myval.yaml' values file."
+    kubectl --namespace "${NAMESPACE}" create secret generic secret-certs --from-file="${CERT_DIR}"/tls.crt --from-file="${CERT_DIR}"/tls.key --from-file="${CERT_DIR}"/ca.crt
+    # kubectl get secret secret-certs -n "${NAMESPACE}" -o yaml
 fi
 
 if ! helm --namespace "${NAMESPACE}" list | grep -q openldap; then
     info "Install openldap chart with 'myval.yaml' testing config"
-    helm install --namespace "${NAMESPACE}" --values .bin/myval.yaml openldap .
-    #kubectl --namespace ds create secret generic my-super-secret --from-literal=LDAP_ADMIN_PASSWORD=Not@SecurePassw0rd --from-literal=LDAP_CONFIG_ADMIN_PASSWORD=Not@SecurePassw0rd
-    #helm install --namespace "${NAMESPACE}" --values .bin/singleNode.yaml openldap .
+    helm install openldap . --namespace "${NAMESPACE}" --values .bin/myval.yaml
     info "waiting for helm deployment to finish..."
      kubectl --namespace ${NAMESPACE} get events --watch &
      ( kubectl --namespace ${NAMESPACE} wait --for=condition=Ready --timeout=30s pod/openldap-0 || \

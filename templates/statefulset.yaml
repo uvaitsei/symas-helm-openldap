@@ -48,16 +48,24 @@ spec:
             - sh
             - -c
             - |
-              cp -p -f /cm-schemas-acls/*.ldif /custom-config/
-              if [ -d /cm-schemas ]; then
-                cp -p -f /cm-schemas/*.ldif /custom-schemas/
-              fi
-              if [ -d /cm-ldifs ]; then
-                cp -p -f /cm-ldifs/*.ldif /custom-ldifs/
+              host=$(hostname)
+              if [ "$host" = "{{ template "openldap.fullname" . }}-0" ]
+              then
+                echo "This is the main openldap so let's init all additional schemas and ldifs here"
+                cp -p -f /cm-schemas-acls/*.ldif /custom_config/
+                if [ -d /cm-schemas ]; then
+                  cp -p -f /cm-schemas/*.ldif /custom-schemas/
+                fi
+                if [ -d /cm-ldifs ]; then
+                  cp -p -f /cm-ldifs/*.ldif /custom-ldifs/
+                fi
+              else
+                cp -p -f /cm-schemas-acls/*.ldif /custom_config/
+                echo "let the replication takes care of everything :)"
               fi
             {{- if .Values.global.existingSecret }}
-              sed -i -e "s/%%CONFIG_PASSWORD%%/${LDAP_CONFIG_ADMIN_PASSWORD}/g" /custom-config/*
-              sed -i -e "s/%%ADMIN_PASSWORD%%/${LDAP_ADMIN_PASSWORD}/g" /custom-config/*
+              sed -i -e "s/%%CONFIG_PASSWORD%%/${LDAP_CONFIG_ADMIN_PASSWORD}/g" /custom_config/*
+              sed -i -e "s/%%ADMIN_PASSWORD%%/${LDAP_ADMIN_PASSWORD}/g" /custom_config/*
             {{- end }}
           {{- if .Values.containerSecurityContext.enabled }}
           securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
@@ -67,8 +75,11 @@ spec:
           {{- end }}
           volumeMounts:
     {{- if .Values.customSchemaFiles }}
+      {{- range $file := (include "openldap.customSchemaFiles" . | split ",") }}
             - name: cm-custom-schema-files
-              mountPath: /cm-schemas/
+              mountPath: /cm-schemas/{{ $file }}.ldif
+              subPath: {{ $file }}.ldif
+      {{- end }}
             - name: custom-schema-files
               mountPath: /custom-schemas/
     {{- end }}
@@ -79,9 +90,9 @@ spec:
               mountPath: /custom-ldifs/
     {{- end }}
             - name: cm-replication-acls
-              mountPath: /cm-schemas-acls/
+              mountPath: "/cm-schemas-acls"
             - name: replication-acls
-              mountPath: /custom-config/
+              mountPath: "/custom_config"
     {{- if .Values.global.existingSecret }}
           envFrom:
           - secretRef:
@@ -90,7 +101,7 @@ spec:
       {{- if .Values.initContainers }}
         {{- include "common.tplvalues.render" (dict "value" .Values.initContainers "context" $) | nindent 8 }}
       {{- end }}
-      {{- if .Values.initTLSSecret.tls_enabled}}
+      {{- if not .Values.initTLSSecret.tls_enabled}}
         - name: init-tls-secret
           image: {{ include "openldap.initTLSSecretImage" . }}
           imagePullPolicy: {{ .Values.initTLSSecret.image.pullPolicy | quote }}
@@ -98,7 +109,8 @@ spec:
             - sh
             - -c
             - |
-              {{- if and ( .Values.initTLSSecret.tls_enabled ) (hasKey .Values.initTLSSecret "secret") (eq .Values.initTLSSecret.secret "") }}
+              {{- if and .Values.initTLSSecret.tls_enabled .Values.initTLSSecret.secret }}
+              {{- else }}
               openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN={{ .Values.global.ldapDomain }}' -keyout /tmp-certs/tls.key -out /tmp-certs/tls.crt -days 365
               chmod 777  /tmp-certs/*
               {{- end }}
@@ -240,13 +252,13 @@ spec:
               readOnly: true
             {{- range $file := (include "openldap.replicationConfigFiles" . | split ",") }}
             - name: replication-acls
-              mountPath: /custom-config/{{ $file }}.ldif
+              mountPath: /docker-entrypoint-initdb.d/{{ $file }}.ldif
               subPath: {{ $file }}.ldif
             {{- end }}
 {{- if .Values.customSchemaFiles}}
             {{- range $file := (include "openldap.customSchemaFiles" . | split ",") }}
             - name: custom-schema-files
-              mountPath: /custom-schemas/{{ $file }}.ldif
+              mountPath: /opt/bitnami/openldap/etc/schema/{{ $file }}.ldif
               subPath: {{ $file }}.ldif
             {{- end }}
 {{- end }}
@@ -310,7 +322,7 @@ spec:
         - name: certs
           emptyDir:
             medium: Memory
-{{- if and ( .Values.initTLSSecret.tls_enabled ) (hasKey .Values.initTLSSecret "secret") (ne .Values.initTLSSecret.secret "") }}
+{{- if .Values.initTLSSecret.tls_enabled }}
         - name: secret-certs
           secret:
             secretName: {{ .Values.initTLSSecret.secret }}

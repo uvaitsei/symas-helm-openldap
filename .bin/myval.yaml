@@ -11,6 +11,25 @@ env:
 # LDAP_LOGLEVEL: "-1"
  SYMAS_DEBUG: "true"
  SYMAS_DEBUG_SETUP: "false"
+service:
+  ldapPortNodePort: 30389
+  sslLdapPortNodePort: 30636
+  type: NodePort
+initTLSSecret:
+  tls_enabled: false
+  image:
+    registry: docker.io
+    repository: alpine/openssl
+    tag: latest
+    pullPolicy: IfNotPresent
+  secret: "secret-certs"
+image:
+  # From repository https://hub.docker.com/r/symas/openldap/
+  repository: symas/openldap
+#  repository: localhost:5001/openldap
+  tag: 2.6.8
+#  tag: test
+  pullPolicy: Always
 resources:
   limits:
     cpu: "128m"
@@ -105,15 +124,3 @@ customLdifFiles:
     objectclass: groupOfNames
     cn: testgroup
     member: uid=test1,ou=People,dc=example,dc=org
-service:
-  ldapPortNodePort: 30389
-  sslLdapPortNodePort: 30636
-  type: NodePort
-initTLSSecret:
-  tls_enabled: true
-  image:
-    registry: docker.io
-    repository: alpine/openssl
-    tag: latest
-    pullPolicy: IfNotPresent
-  secret: "myval-certs"

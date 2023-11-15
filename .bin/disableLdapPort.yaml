@@ -16,4 +16,4 @@ service:
   sslLdapPortNodePort: 30636
   type: NodePort
 initTLSSecret:
-  tls_enabled: true
+  tls_enabled: false
