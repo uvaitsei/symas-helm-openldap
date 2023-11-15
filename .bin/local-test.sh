@@ -161,7 +161,7 @@ if ! kubectl --namespace $NAMESPACE get secret custom-cert > /dev/null 2>&1; the
         ! [ -d "${CERT_DIR}" ] && mkdir -p "${CERT_DIR}"
         # For "customTLS" we need to provide a certificate, so make one now.
         info "Creating TLS certs in ${CERT_DIR}"
-        openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN=example.com' -keyout "${CERT_DIR}"/tls.key -out "${CERT_DIR}"/tls.crt -days 365
+        openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN=example.com' -keyout "${CERT_DIR}"/tls.key -out "${CERT_DIR}"/tls.crt -days 365 > /dev/null 2>&1
         cp "${CERT_DIR}"/tls.crt "${CERT_DIR}"/ca.crt
     fi
 
@@ -171,7 +171,7 @@ fi
 
 if ! helm --namespace "${NAMESPACE}" list | grep -q openldap; then
     info "Install openldap chart with 'myval.yaml' testing config"
-    helm install --namespace "${NAMESPACE}" openldap -f .bin/myval.yaml .
+    helm install --namespace "${NAMESPACE}" openldap -f .bin/myval.yaml openldap
     info "waiting for helm deployment to finish..."
     # kubectl --namespace ds get events --watch &
     # ( kubectl --namespace ${NAMESPACE} wait --for=condition=Ready --timeout=30s pod/openldap-0 || \

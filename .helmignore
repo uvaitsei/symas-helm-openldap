@@ -1,9 +1,25 @@
-.git
+# Patterns to ignore when building packages.
+# This supports shell glob matching, relative path matching, and
+# negation (prefixed with !). Only one pattern per line.
+.DS_Store
+# Git/GitHub
+.git/
+.gitignore
 .github
+# Common backup files
+*.swp
+*.bak
+*.tmp
+*~
+# Various IDEs
+.project
+.idea/
+*.tmproj
+.vscode/
+
+# Other
 .chaos
 .argo-workflow
 .bin
-.DS_Store
-advanced_examples
 shell.nix
 

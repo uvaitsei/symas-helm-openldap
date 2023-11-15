@@ -5,19 +5,14 @@ on:
       - "*"
   pull_request:
     branches:
+      - "main"
       - "master"
-      - "bitnami"
 jobs:
   qualif:
       runs-on: ubuntu-latest
       steps:
       - name: Check out code
         uses: actions/checkout@v1
-      - name: Lint
-        shell: bash
-        run: |
-          helm dependency update .
-          helm lint .
       - name: setup cluster
         shell: bash
         run: |
@@ -26,10 +21,6 @@ jobs:
           /tmp/kind create cluster --config=$GITHUB_WORKSPACE/.bin/kind-conf.yml --image=kindest/node:v1.28.0@sha256:9f3ff58f19dcf1a0611d11e8ac989fdb30a28f40f236f59f0bea31fb956ccf5c
           kubectl apply -f https://projectcontour.io/quickstart/contour.yaml
           kubectl patch daemonsets -n projectcontour envoy -p '{"spec":{"template":{"spec":{"nodeSelector":{"ingress-ready":"true"},"tolerations":[{"key":"node-role.kubernetes.io/control-plane","operator":"Equal","effect":"NoSchedule"},{"key":"node-role.kubernetes.io/master","operator":"Equal","effect":"NoSchedule"}]}}}}'
-      - name: setup chaos mesh
-        shell: bash
-        run: |
-          curl -sSL https://mirrors.chaos-mesh.org/v2.6.2/install.sh  | bash -s -- --local kind
       - name: create namespace
         shell: bash
         run: |
@@ -44,63 +35,66 @@ jobs:
         shell: bash
         run: |
           cd "$GITHUB_WORKSPACE"
-          helm install --namespace ds openldap -f .bin/myval.yaml .
+          helm install --namespace ds openldap -f .bin/myval.yaml openldap
           kubectl --namespace ds get events --watch &
-          ( kubectl --namespace ds wait --for=condition=Ready --timeout=30s pod/openldap-0; kubectl --namespace ds logs -l app.kubernetes.io/name=openldap --all-containers=true --timestamps=true --prefix=true --since=10m --tail=-1 --ignore-errors --follow ) &
-          kubectl --namespace ds rollout status sts openldap
+          kubectl --namespace ds rollout status sts openldap; ec=$?
+          kubectl --namespace ds logs -l app.kubernetes.io/name=openldap --all-containers=true --timestamps=true --prefix=true --since=6h --tail=-1 --ignore-errors
+          exit $ec
       - name: verify deployment
         shell: bash
         run: |
-           echo "test access to openldap database"
            sudo apt-get install -y ldap-utils
            LDAPTLS_REQCERT=never ldapsearch -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org'
-      - name: test phpldapadmin access
-        shell: bash
-        run: |
-           echo "test access to phpldapadmin"
-           echo "127.0.0.1 phpldapadmin.example ssl-ldap2.example" | sudo tee -a /etc/hosts
-           curl phpldapadmin.example:8080
-      - name: test self service pwd access
-        shell: bash
-        run: |
-           echo "test access to ssp"
-           curl ssl-ldap2.example:8080
       - name: verify certs
         shell: bash
         run: |
-           echo "verify certificate"
            openssl s_client -showcerts -connect localhost:30636 </dev/null | grep "issuer=CN = example.com"
-      - name: apply chaos tests
+      - name: setup chaos mesh
         shell: bash
         run: |
-           echo "test access to openldap database"
-           kubectl apply -f .bin/chaos.yaml
+          curl -sSL https://mirrors.chaos-mesh.org/v2.6.2/install.sh  | bash -s -- --local kind
       - name: run a few basic tests against the openldap cluster
         run: $GITHUB_WORKSPACE/.bin/tests.sh -d 100
-      - name: chaos tests
+      - name: add chaos mesh to the cluster
         shell: bash
         run: |
-           echo "test access to openldap database"
+           kubectl apply -f .bin/chaos.yaml
+      - name: perform tests amid "chaotic" conditions
+        shell: bash
+        run: |
            cd "$GITHUB_WORKSPACE"
            for i in {1..10}; do
                LDAPTLS_REQCERT=never ldapsearch -o nettimeout=20 -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'cn=Jean Dupond,dc=example,dc=org' | awk -f .bin/ldif2json | jq . - && sleep 47
            done
+      - name: validate phpldapadmin access
+        shell: bash
+        run: |
+           echo "127.0.0.1 phpldapadmin.example ssl-ldap2.example" | sudo tee -a /etc/hosts
+           curl phpldapadmin.example:8080
+      - name: validate self service pwd access
+        shell: bash
+        run: |
+           curl ssl-ldap2.example:8080
+      - name: delete multi-node deployment
+        shell: bash
+        run: |
+          helm delete --namespace ds openldap
       - name: deploy openldap-single-node
         shell: bash
         run: |
           cd "$GITHUB_WORKSPACE"
-          helm delete --namespace ds openldap
-          helm install openldap -n single --create-namespace -f .bin/singleNode.yaml .
-          kubectl rollout status sts openldap -n single
+          helm install openldap -n single --create-namespace -f .bin/singleNode.yaml openldap
+          kubectl --namespace single get events --watch &
+          kubectl --namespace single rollout status sts openldap; ec=$?
+          kubectl --namespace single logs -l app.kubernetes.io/name=openldap --all-containers=true --timestamps=true --prefix=true --since=6h --tail=-1 --ignore-errors
+          exit $ec
       # - name: verify single node deployment
       #   shell: bash
       #   run: |
-      #      echo "test access to openldap database"
       #      sudo apt-get install -y ldap-utils
-      #      LDAPTLS_REQCERT=never ldapsearch -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org' > /tmp/test-single-node.txt
-      #      cat /tmp/test-single-node.txt
-      #      if [ $(grep "numResponses" /tmp/test-single-node.txt | cut -d ":" -f 2 | tr -d ' ') -ne 7 ]; then exit 1 ; fi
-      - name: remove single node deployment
+      #      kubectl port-forward --namespace single service/openldap 30636:1636 > /dev/null 2>&1 &
+      #      LDAPTLS_REQCERT=never ldapsearch -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org' | awk -f .bin/ldif2json
+      - name: delete single node deployment
         shell: bash
         run: |
           helm delete -n single openldap

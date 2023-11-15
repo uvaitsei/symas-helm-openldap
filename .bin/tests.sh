@@ -90,7 +90,7 @@ if [ -z "${1:-}" ]; then
     done
 fi
 
-info "Search for that user in our cluster"
+info "Search again for that same user in our cluster"
 ldap_search 'dc=example,dc=org'
 
 if [ -z "${1:-}" ]; then
