@@ -1,4 +1,7 @@
 TODO:
+* local-test.sh
+  * fix TLS
+* syncprov
 * add ldap-ui tool
 
 https://stackoverflow.com/questions/67903732/custom-load-balancing-in-kubernetes

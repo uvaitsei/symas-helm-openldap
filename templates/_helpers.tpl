@@ -163,7 +163,7 @@ Return the proper OpenLDAP init container image name
 {{- end -}}
 
 {{/*
-Return the proper Openldap volume permissions init container image name
+Return the proper OpenLDAP volume permissions init container image name
 */}}
 {{- define "openldap.volumePermissionsImage" -}}
 {{- include "common.images.image" (dict "imageRoot" .Values.volumePermissions.image "global" .Values.global) -}}
@@ -176,11 +176,6 @@ Cannot return list => return string comma separated
 */}}
 {{- define "openldap.builtinSchemaFiles" -}}
   {{- $schemas := "" -}}
-  {{- if .Values.replication.enabled -}}
-    {{- $schemas = "syncprov,serverid,csyncprov,rep,bsyncprov,brep,acls" -}}
-  {{- else -}}
-    {{- $schemas = "acls" -}}
-  {{- end -}}
   {{- print $schemas -}}
 {{- end -}}
 

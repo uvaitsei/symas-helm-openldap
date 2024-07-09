@@ -16,13 +16,8 @@ service:
   sslLdapPortNodePort: 30636
   type: NodePort
 initTLSSecret:
-  tls_enabled: false
-  image:
-    registry: docker.io
-    repository: alpine/openssl
-    tag: latest
-    pullPolicy: IfNotPresent
-  secret: "secret-certs"
+  tls_enabled: true
+  secret: myval-certs
 image:
   # From repository https://hub.docker.com/r/symas/openldap/
   repository: symas/openldap

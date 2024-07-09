@@ -298,7 +298,7 @@ In order to scale the cluster, first use `helm` to updrgade the number of `repli
 ```
 helm upgrade -n openldap-ha --set replicaCount=4 openldap-ha .
 ```
-Then connect to the `<openldap>-0` container, under `/opt/bitnami/openldap/etc/schema/`, edit :
+Then connect to the `<openldap>-0` container, under `/schemas/`, edit :
  1. `serverid.ldif` and remove existing `olcServerID` (only keep the one you added by scaling)
  2. `brep.ldif` and remove existing `olcServerID` (only keep the one you added by scaling)
  3. Apply your changes
@@ -312,7 +312,7 @@ Tips : to edit in the container, use :
 ```
 cat <<EOF > /tmp/serverid.ldif
 copy
-your 
+your
 line
 EOF
 ```
