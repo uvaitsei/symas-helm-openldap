@@ -31,13 +31,20 @@ resources:
     memory: "64Mi"
 replicaCount: 3
 ltb-passwd:
+  enabled: false
   ingress:
     hosts:
     - "ssl-ldap2.example"
 phpldapadmin:
+  enabled: true
   ingress:
     hosts:
     - "phpldapadmin.example"
+ldap-ui:
+  enabled: true
+  ingress:
+    hosts:
+    - "ldap-ui.example"
 customSchemaFiles:
   00-memberof.ldif: |-
     # Load memberof module

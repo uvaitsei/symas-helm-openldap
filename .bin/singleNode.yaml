@@ -30,6 +30,10 @@ phpldapadmin:
   ingress:
     hosts:
     - "phpldapadmin.example"
+ldap-ui:
+  ingress:
+    hosts:
+    - "ldap-ui.example"
 service:
   enableLdapPort: false
   sslLdapPortNodePort: 30636

@@ -175,7 +175,7 @@ Return the list of builtin schema files to mount
 Cannot return list => return string comma separated
 */}}
 {{- define "openldap.builtinSchemaFiles" -}}
-  {{- $schemas := "" -}}
+  {{- $schemas := "cosine,inetorgperson,nis" -}}
   {{- print $schemas -}}
 {{- end -}}
 
@@ -247,7 +247,7 @@ Return the server name
 {{- end -}}
 
 {{/*
-Return the bdmin indDN
+Return the admin bindDN
 */}}
 {{- define "global.bindDN" -}}
 {{- printf "cn=%s,%s" .Values.global.adminUser (include "global.baseDomain" .) -}}
