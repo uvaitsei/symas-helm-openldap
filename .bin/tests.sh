@@ -42,7 +42,7 @@ proxy() {
 ldap_add() {
     p=30636
     if [ $# -eq 2 ]; then
-	debug_execute ldapadd -x -D 'cn=admin,dc=example,dc=org' -w "${LDAP_ADMIN_PASSWORD}" -H ldaps://localhost:"$p" -f "$1" || true
+	debug_execute ldapadd -o nettimeout=20 -x -D 'cn=admin,dc=example,dc=org' -w "${LDAP_ADMIN_PASSWORD}" -H ldaps://localhost:"$p" -f "$1" || true
 	trap 'debug_execute ldapmodify -x -D 'cn=admin,dc=example,dc=org' -w "${LDAP_ADMIN_PASSWORD}" -H ldaps://localhost:30636 -f "$2"' SIGHUP SIGINT SIGQUIT SIGPIPE SIGTERM
     else
 	exit 1
@@ -57,9 +57,9 @@ ldap_search() {
     fi
     for p in 30636 40636 41636 42636; do
 	if [ $# -eq 1 ]; then
-	    debug_execute ldapsearch -x -D "${DN}" -w "${LDAP_ADMIN_PASSWORD}" -H ldaps://localhost:"$p" -b "$1" || true
+	    debug_execute ldapsearch -o nettimeout=20 -x -D "${DN}" -w "${LDAP_ADMIN_PASSWORD}" -H ldaps://localhost:"$p" -b "$1" || true
 	elif [ $# -eq 2 ]; then
-	    debug_execute ldapsearch -x -D "${DN}" -w "${LDAP_ADMIN_PASSWORD}" -H ldaps://localhost:"$p" -b "$1" | tee "$2" || true
+	    debug_execute ldapsearch -o nettimeout=20 -x -D "${DN}" -w "${LDAP_ADMIN_PASSWORD}" -H ldaps://localhost:"$p" -b "$1" | tee "$2" || true
 	    trap "rm $2 || true" SIGHUP SIGINT SIGQUIT SIGPIPE SIGTERM EXIT
 	else
 	    exit 1
@@ -106,7 +106,7 @@ fi
 info Search for the ownCloud config
 # https://github.com/valerytschopp/owncloud-ldap-schema/tree/master?tab=readme-ov-file#installation
 #ldapsearch -H ldapi:// -Y EXTERNAL -LLL -b cn=config "(cn={*}owncloud)"
-#debug_execute env LDAPTLS_REQCERT=never ldapsearch -x -D cn=admin,dc=example,dc=org -w Not@SecurePassw0rd -H ldaps://localhost:30636 -LLL -b cn=config "(cn={*}owncloud)" | tee /tmp/test-write.txt
+#debug_execute env LDAPTLS_REQCERT=never ldapsearch -o nettimeout=20 -x -D cn=admin,dc=example,dc=org -w Not@SecurePassw0rd -H ldaps://localhost:30636 -LLL -b cn=config "(cn={*}owncloud)" | tee /tmp/test-write.txt
 #ldap_search cn=admin,cn=config "(cn={*}owncloud)" /tmp/test-write.txt
 
 cnt=${2:-${1:-10}}
