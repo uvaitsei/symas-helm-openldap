@@ -1,0 +1,29 @@
+name: Test-Other
+on:
+  workflow_call:
+jobs:
+  qualif:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+    - name: Setup Kind/K8S Cluster
+      uses: ./.github/actions/setup
+      with:
+        install-chaos: false
+    - name: Create namespace
+      shell: bash
+      run: |
+        kubectl create namespace ds
+    - name: Deploy OpenLDAP/HA, disabled LDAP port
+      shell: bash
+      run: |
+        helm install openldap --namespace ds --create-namespace -f .bin/disableLdapPort.yaml .
+        kubectl --namespace ds get events --watch &
+        kubectl --namespace ds rollout status sts openldap; ec=$?
+        kubectl --namespace ds logs -l app.kubernetes.io/name=openldap --all-containers=true --timestamps=true --prefix=true --since=6h --tail=-1 --ignore-errors
+        exit $ec
+    - name: Test OpenLDAP database via TLS
+      uses: ./.github/actions/tls-access
+      with:
+        port: 30636

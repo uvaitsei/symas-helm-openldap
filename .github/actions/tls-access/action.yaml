@@ -1,0 +1,45 @@
+name: 'Test OpenLDAP database via TLS'
+description: 'Runs a few basic commands to ensure the setup is working'
+inputs:
+  bind_dn:
+    description: 'Bind DN'
+    required: false
+    default: 'cn=admin,dc=example,dc=org'
+  base_dn:
+    description: 'Base DN'
+    required: false
+    default: 'dc=example,dc=org'
+  password:
+    description: 'Password for DN'
+    required: false
+    default: 'Not@SecurePassw0rd'
+  port:
+    description: 'OpenLDAP TLS port'
+    required: false
+    default: 30636
+  server_name:
+    description: 'Server name expected in the TLS materials'
+    required: false
+    default: 'example.org'
+runs:
+  using: "composite"
+  steps:
+    - name: Verify TLS Certificate Materials
+      shell: bash
+      run: |
+        (echo | openssl s_client -showcerts -servername ${{ inputs.sever_name }} -connect localhost:${{ inputs.port }} 2>/dev/null | openssl x509 -inform pem -noout -text | grep -q "CN = ${{ inputs.sever_name }}") || exit 1
+    - name: Test access by reading all LDIF from the OpenLDAP database
+      shell: bash
+      run: |
+        LDAPTLS_REQCERT=never ldapsearch -x -D ${{ inputs.bind_dn }} -w ${{ inputs.password }} -H ldaps://localhost:${{ inputs.port }} -b ${{ inputs.base_dn }}
+    - name: Write a new user to the OpenLDAP database
+      shell: bash
+      run: |
+        sed 's/dc=example,dc=org/${{ inputs.base_dn }}/' .bin/randomUser.ldif | LDAPTLS_REQCERT=never ldapadd -x -D ${{ inputs.bind_dn }} -w ${{ inputs.password }} -H ldaps://localhost:${{ inputs.port }}
+    - name: Try searching for Jon Doe within the OpenLDAP database a few times
+      shell: bash
+      run: |
+        for ((i=1; i<=$(( ( RANDOM % 11 ) + 1 )); i++)); do
+          ( LDAPTLS_REQCERT=never ldapsearch -o nettimeout=20 -x -D ${{ inputs.bind_dn }} -w ${{ inputs.password }} -H ldaps://localhost:${{ inputs.port }} -b 'cn=user01,ou=users,${{ inputs.base_dn }}' | awk -f .bin/ldif2json | jq ) || /bin/true
+          sleep $(( ( RANDOM % 21 ) + 10 ))
+        done

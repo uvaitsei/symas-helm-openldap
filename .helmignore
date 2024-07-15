@@ -3,7 +3,7 @@
 # negation (prefixed with !). Only one pattern per line.
 .DS_Store
 # Git/GitHub
-.git/
+.git
 .gitignore
 .github
 # Common backup files
@@ -21,5 +21,10 @@
 .chaos
 .argo-workflow
 .bin
+.direnv
+.envrc
+advanced_examples
+flake.nix
+flake.lock
 shell.nix
 

@@ -1,7 +1,7 @@
 myValues.yaml
 ignore/*
 ignore
+.direnv
 .DS_Store
-shell.nix
 *~
 .idea/
