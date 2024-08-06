@@ -48,19 +48,12 @@ spec:
             - sh
             - -c
             - |
-              host=$(hostname)
-              if [ "$host" = "{{ template "openldap.fullname" . }}-0" ]
-              then
-                echo "This is the main OpenLDAP so let's init all additional schemas and ldifs here..."
-                cp -p -f /cm-schemas-acls/*.ldif /custom-config/
-                if [ -d /cm-schemas ]; then
-                  cp -p -f /cm-schemas/*.ldif /custom-schemas/
-                fi
-                if [ -d /cm-ldifs ]; then
-                  cp -p -f /cm-ldifs/*.ldif /custom-ldifs/
-                fi
-              else
-                cp -p -f /cm-schemas-acls/*.ldif /custom-config/
+              cp -p -f /cm-schemas-acls/*.ldif /custom-config/
+              if [ -d /cm-schemas ]; then
+                cp -p -f /cm-schemas/*.ldif /custom-schemas/
+              fi
+              if [ -d /cm-ldifs ]; then
+                cp -p -f /cm-ldifs/*.ldif /custom-ldifs/
               fi
             {{- if .Values.global.existingSecret }}
               sed -i -e "s/%%CONFIG_PASSWORD%%/${LDAP_CONFIG_ADMIN_PASSWORD}/g" /custom-config/*
