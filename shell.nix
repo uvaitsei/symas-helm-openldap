@@ -15,6 +15,9 @@ mkShell rec {
     kubectl
     kind
     (pkgs.wrapHelm pkgs.kubernetes-helm { plugins = [ pkgs.kubernetes-helmPlugins.helm-secrets ]; })
+    # https://github.com/komodorio/helm-dashboard
+    #(pkgs.wrapHelm pkgs.kubernetes-helm { plugins = [ pkgs.kubernetes-helmPlugins.helm-dashboard ]; })
+
     kustomize
     jq
     openssh

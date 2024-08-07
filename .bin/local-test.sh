@@ -153,6 +153,23 @@ for arg in "$@"; do
     fi
 done
 
+for arg in "$@"; do
+    if [[ "$arg" == "--dash" ]]; then
+	if ! kubectl get namespace | grep -q kubernetes-dashboard; then
+	    helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
+	    helm upgrade --install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard --create-namespace --namespace kubernetes-dashboard
+	    # Check the services in Kubernetes Dashboard namespace using:
+            #  kubectl -n kubernetes-dashboard get svc
+	    #  kubectl -n kubernetes-dashboard port-forward svc/kubernetes-dashboard-kong-proxy 8443:443
+	    #  https://localhost:8443
+	    # or
+	    #  kubectl proxy --port=8001
+	    #  http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard-kong-proxy:443/proxy/
+	fi
+    fi
+    break
+done
+
 if kubectl get namespace | grep -q "${NAMESPACE}"; then
     if helm list --namespace ${NAMESPACE} --no-headers --short | grep -q openldap; then
         info "Uninstall previous deployment of OpenLDAP chart"
