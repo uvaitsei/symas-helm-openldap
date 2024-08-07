@@ -1,0 +1,6 @@
+# Chart.yaml
+apiVersion: v2
+name: ldap-ui
+version: 0.1.0
+description: A Helm chart for dnknth/ldap-ui
+type: application

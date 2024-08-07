@@ -1,0 +1,14 @@
+# templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: ldap-ui
+  labels:
+    app: ldap-ui
+spec:
+  selector:
+    app: ldap-ui
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80

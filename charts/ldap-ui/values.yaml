@@ -1,0 +1,6 @@
+# values.yaml
+replicaCount: 1
+image:
+  repository: dnknth/ldap-ui
+  pullPolicy: Always
+  tag: latest

@@ -1,0 +1,22 @@
+# templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ldap-ui
+  labels:
+    app: ldap-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ldap-ui
+  template:
+    metadata:
+      labels:
+        app: ldap-ui
+    spec:
+      containers:
+      - name: ldap-ui
+        image: dnknth/ldap-ui:latest
+        ports:
+        - containerPort: 80
