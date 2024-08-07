@@ -78,7 +78,6 @@ Generate olcSyncRepl list
 {{- $starttls := .Values.replication.starttls }}
 {{- $tls_reqcert := .Values.replication.tls_reqcert }}
 {{- $nodeCount := .Values.replicaCount | int }}
-{{- $port := .Values.service.ldapPort | int }}
   {{- range $index0 := until $nodeCount }}
     {{- $index1 := $index0 | add1 }}
     olcSyncRepl: rid=00{{ $index1 }} provider=ldap://{{ $name }}-{{ $index0 }}.{{ $name }}-headless.{{ $namespace }}.svc.{{ $cluster }}:1389 binddn="{{ printf "cn=%s,%s" $bindDNUser $domain }}" bindmethod=simple credentials={{ $configPassword }} searchbase="cn=config" type=refreshAndPersist retry="{{ $retry }} +" timeout={{ $timeout }} starttls={{ $starttls }} tls_reqcert={{ $tls_reqcert }}
@@ -175,7 +174,7 @@ Return the list of builtin schema files to mount
 Cannot return list => return string comma separated
 */}}
 {{- define "openldap.builtinSchemaFiles" -}}
-  {{- $schemas := "cosine,inetorgperson,nis" -}}
+  {{- $schemas := "" -}}
   {{- print $schemas -}}
 {{- end -}}
 
@@ -209,10 +208,6 @@ Cannot return list => return string comma separated
 */}}
 {{- define "openldap.schemaFiles" -}}
   {{- $schemas := (include "openldap.builtinSchemaFiles" .) -}}
-  {{- $custom_schemas := (include "openldap.customSchemaFiles" .) -}}
-  {{- if gt (len $custom_schemas) 0 -}}
-    {{- $schemas = print $schemas "," $custom_schemas  -}}
-  {{- end -}}
   {{- print $schemas -}}
 {{- end -}}
 

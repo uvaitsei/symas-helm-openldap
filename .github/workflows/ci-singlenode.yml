@@ -3,34 +3,34 @@ on:
   workflow_call:
 jobs:
   qualif:
-      runs-on: ubuntu-latest
-      steps:
-      - name: Check out code
-        uses: actions/checkout@v1
-      - name: Run custom action
-        # Use the location in the repository (without action.yml)
-        uses: ./.github/actions/setup
-        with:
-          install-chaos: false
-      - name: Create namespace
-        shell: bash
-        run: |
-          kubectl create namespace ds
-      - name: Create a secret to update later on
-        shell: bash
-        run: |
-          kubectl create secret generic my-super-secret -n single --from-literal=LDAP_ADMIN_PASSWORD=Not@SecurePassw0rd --from-literal=LDAP_CONFIG_ADMIN_PASSWORD=Not@SecurePassw0rd
-      - name: Deploy OpenLDAP single node
-        shell: bash
-        run: |
-          helm install openldap -n ds --create-namespace -f .bin/singleNode.yaml .
-          kubectl --namespace ds get events --watch &
-          kubectl --namespace ds rollout status sts openldap; ec=$?
-          kubectl --namespace ds logs -l app.kubernetes.io/name=openldap --all-containers=true --timestamps=true --prefix=true --since=6h --tail=-1 --ignore-errors
-          exit $ec
-      - name: Verify single node deployment
-        shell: bash
-        run: |
-           sleep 10
-           echo "test access to openldap database"
-           LDAPTLS_REQCERT=never ldapsearch -o nettimeout=20 -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'cn=Jean Dupond,dc=example,dc=org' | awk -f .bin/ldif2json | jq . -
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v1
+    - name: Run custom action
+      # Use the location in the repository (without action.yml)
+      uses: ./.github/actions/setup
+      with:
+        install-chaos: false
+    - name: Create namespace
+      shell: bash
+      run: |
+        kubectl create namespace ds
+    - name: Create a secret to update later on
+      shell: bash
+      run: |
+        kubectl --namespace ds create secret generic my-super-secret --from-literal=LDAP_ADMIN_PASSWORD=Not@SecurePassw0rd --from-literal=LDAP_CONFIG_ADMIN_PASSWORD=Not@SecurePassw0rd
+    - name: Deploy OpenLDAP single node
+      shell: bash
+      run: |
+        helm install --namespace ds openldap -f .bin/singleNode.yaml .
+        kubectl --namespace ds get events --watch &
+        kubectl --namespace ds rollout status sts openldap; ec=$?
+        kubectl --namespace ds logs -l app.kubernetes.io/name=openldap --all-containers=true --timestamps=true --prefix=true --since=6h --tail=-1 --ignore-errors
+        exit $ec
+    - name: Test OpenLDAP database via TLS
+      uses: ./.github/actions/tls-access
+      with:
+        port: 30636
+        bind_dn: 'cn=admin,dc=singlenode,dc=org'
+        base_dn: 'dc=singlenode,dc=org'

@@ -11,13 +11,6 @@ env:
 # LDAP_LOGLEVEL: "-1"
  SYMAS_DEBUG: "true"
  SYMAS_DEBUG_SETUP: "false"
-service:
-  ldapPortNodePort: 30389
-  sslLdapPortNodePort: 30636
-  type: NodePort
-initTLSSecret:
-  tls_enabled: true
-  secret: myval-certs
 image:
   # From repository https://hub.docker.com/r/symas/openldap/
   repository: symas/openldap
@@ -31,17 +24,21 @@ resources:
     memory: "64Mi"
 replicaCount: 3
 ltb-passwd:
-  enabled: false
+  enabled: true
   ingress:
     hosts:
     - "ssl-ldap2.example"
 phpldapadmin:
-  enabled: true
+  enabled: false
+  readinessProbe:
+    enabled: false
+  livenessProbe:
+    enabled: false
   ingress:
     hosts:
     - "phpldapadmin.example"
 ldap-ui:
-  enabled: true
+  enabled: false
   ingress:
     hosts:
     - "ldap-ui.example"
@@ -126,3 +123,15 @@ customLdifFiles:
     objectclass: groupOfNames
     cn: testgroup
     member: uid=test1,ou=People,dc=example,dc=org
+service:
+  ldapPortNodePort: 30389
+  sslLdapPortNodePort: 30636
+  type: NodePort
+initTLSSecret:
+  tls_enabled: true
+  image:
+    registry: docker.io
+    repository: alpine/openssl
+    tag: latest
+    pullPolicy: IfNotPresent
+  secret: "myval-certs"

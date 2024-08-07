@@ -1,18 +1,13 @@
 TODO:
 * local-test.sh
+  * chaos mesh seems broken
+  * project envoy isn't working
   * fix TLS
 * syncprov
-* add ldap-ui tool
 
 https://stackoverflow.com/questions/67903732/custom-load-balancing-in-kubernetes
 
 https://medium.com/nuvo-group-tech/move-your-certs-to-helm-4f5f61338aca
-
-## ldap-ui
-## For more parameters check following file: ./charts/ldap-ui/values.yaml
-ldap-ui:
-  enabled: true
-
 
 git config --local --add alias.changed-files '!f() { git diff --stat --name-only $1^ $1 | xargs git ls-tree --full-tree  $1 ; }; f'
 git changed-files $(git rev-parse HEAD~10)

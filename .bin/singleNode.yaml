@@ -27,6 +27,11 @@ ltb-passwd:
     hosts:
     - "ssl-ldap2.example"
 phpldapadmin:
+  enabled: false
+  readinessProbe:
+    enabled: false
+  livenessProbe:
+    enabled: false
   ingress:
     hosts:
     - "phpldapadmin.example"
@@ -39,4 +44,4 @@ service:
   sslLdapPortNodePort: 30636
   type: NodePort
 initTLSSecret:
-  tls_enabled: false
+  tls_enabled: true

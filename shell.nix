@@ -6,6 +6,7 @@ mkShell rec {
   name = "helm";
   packages = with pkgs; [ bashInteractive ];
   buildInputs = [
+    aspell
     curl
     dig
     cfssl

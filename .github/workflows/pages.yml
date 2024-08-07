@@ -38,8 +38,8 @@ jobs:
           target_branch="gh-pages"
           build_dir="dist"
           repo_uri="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
-          cd "$GITHUB_WORKSPACE"/openldap
-          helm package --destination ../.. .
+          cd "$GITHUB_WORKSPACE"
+          helm package --destination ../ .
           cd "$GITHUB_WORKSPACE"
           git checkout "$target_branch"
           mv ../*.tgz .
