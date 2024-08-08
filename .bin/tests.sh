@@ -42,7 +42,7 @@ proxy() {
 ldap_add() {
     p=30636
     if [ $# -eq 2 ]; then
-	debug_execute ldapadd -x -D 'cn=admin,dc=example,dc=org' -w "${LDAP_ADMIN_PASSWORD}" -H ldaps://localhost:"$p" -f "$1" || true
+	debug_execute ldapadd -x -D 'cn=admin,dc=example,dc=org' -w "${LDAP_ADMIN_PASSWORD}" -H ldaps://localhost:"$p" -f "$1"
 	trap 'debug_execute ldapmodify -x -D 'cn=admin,dc=example,dc=org' -w "${LDAP_ADMIN_PASSWORD}" -H ldaps://localhost:30636 -f "$2"' SIGHUP SIGINT SIGQUIT SIGPIPE SIGTERM
     else
 	exit 1
@@ -51,25 +51,17 @@ ldap_add() {
 
 ldap_search() {
     DN='cn=admin,dc=example,dc=org'
-    if [ $# -eq 3 ]; then
-	DN=$1
-	shift
-    fi
     for p in 30636 40636 41636 42636; do
-	if [ $# -eq 1 ]; then
-	    debug_execute ldapsearch -x -D "${DN}" -w "${LDAP_ADMIN_PASSWORD}" -H ldaps://localhost:"$p" -b "$1" || true
-	elif [ $# -eq 2 ]; then
-	    debug_execute ldapsearch -x -D "${DN}" -w "${LDAP_ADMIN_PASSWORD}" -H ldaps://localhost:"$p" -b "$1" | tee "$2" || true
-	    trap "rm $2 || true" SIGHUP SIGINT SIGQUIT SIGPIPE SIGTERM EXIT
-	else
-	    exit 1
-	fi
+	TMP="/tmp/$(basename $0)-$$"
+	trap "rm $TMP.$p || true" SIGHUP SIGINT SIGQUIT SIGPIPE SIGTERM EXIT
+	debug_execute ldapsearch -o nettimeout=20 -x -D "${DN}" -w "${LDAP_ADMIN_PASSWORD}" -H ldaps://localhost:"$p" -b $@ | tee "$TMP.$p"
     done
 }
 
 NAMESPACE=ds
 
 info "Testing the openldap database cluster..."
+ports=(30636 40636 41636 42636)
 
 proxy 30636 1636 service/openldap
 proxy 40636 1636 openldap-0
@@ -82,48 +74,67 @@ LDAP_ADMIN_PASSWORD=$(kubectl get secret --namespace ${NAMESPACE} openldap -o js
 info "Add a single user"
 ldap_add .bin/user.ldif .bin/user-delete.ldif
 
-if false
+if true
 then
-    info "Testing MemberOf"
-    ldap_search 'cn=admin,dc=example,dc=org' /tmp/test-memberof.txt
-    awk -f .bin/ldif2json /tmp/test-memberof.txt | jq
-    [[ $(grep "numResponses" /tmp/test-memberof.txt | cut -d ":" -f 2 | tr -d ' ') -lt 2 ]] && exit 1
-    [[ $(grep "uid=test1,ou=People,dc=example,dc=org" /tmp/test-memberof.txt) == "objectClass: ownCloud" ]] || exit 1
+    info "Search for that user in our cluster"
+    ldap_search 'uid=einstein,dc=example,dc=org'
+
+    for p in $ports; do
+	if [[ $p != 30636 ]]; then
+	    [[ $(diff "$TMP.30636" "$TMP.$p" >/dev/null 2>&1) ]] || exit 1
+	fi
+    done
+    p=${ports[$((RANDOM % ${#ports[@]}))]}
+
+    info "Ensure num responses"
+    [[ $(grep "numResponses" $TMP.$p | cut -d ":" -f 2 | tr -d ' ') -ge 1 ]] || exit 1
+
+    info "Ensure objectClass"
+    [[ $(grep "objectClass: ownCloud" $TMP.$p) == "objectClass: ownCloud" ]] || exit 1
 fi
 
 if true
 then
-    info "Search for that user in our cluster"
-    ldap_search 'dc=example,dc=org' /tmp/test-write.txt
+    info "Testing MemberOf"
+    ldap_search 'dc=example,dc=org' "(memberOf=cn=testgroup,ou=Group,dc=example,dc=org)"
 
-    #info "Ensure num responses"
-    #[[ $(grep "numResponses" /tmp/test-write.txt | cut -d ":" -f 2 | tr -d ' ') -ge 1 ]] || exit 1
+    for p in $ports; do
+	if [[ $p != 30636 ]]; then
+	    [[ $(diff "$TMP.30636" "$TMP.$p" >/dev/null 2>&1) ]] || exit 1
+	fi
+    done
+    p=${ports[$((RANDOM % ${#ports[@]}))]}
 
-    #info "Ensure objectClass"
-    #[[ $(grep "objectClass: ownCloud" /tmp/test-write.txt) == "objectClass: ownCloud" ]] || exit 1
+    [[ $(grep "numResponses" "$TMP.$p" | cut -d ":" -f 2 | tr -d ' ') -lt 2 ]] && exit 1
+
+    ATTR=$(awk -f .bin/ldif2json "$TMP.$p" | jq -r '.["uid=test1,ou=People,dc=example,dc=org"].dn')
+    [[ "$ATTR" == 'uid=test1,ou=People,dc=example,dc=org' ]] || exit 1
 fi
-
-info Search for the ownCloud config
-# https://github.com/valerytschopp/owncloud-ldap-schema/tree/master?tab=readme-ov-file#installation
-#ldapsearch -H ldapi:// -Y EXTERNAL -LLL -b cn=config "(cn={*}owncloud)"
-#debug_execute env LDAPTLS_REQCERT=never ldapsearch -x -D cn=admin,dc=example,dc=org -w Not@SecurePassw0rd -H ldaps://localhost:30636 -LLL -b cn=config "(cn={*}owncloud)" | tee /tmp/test-write.txt
-#ldap_search cn=admin,cn=config "(cn={*}owncloud)" /tmp/test-write.txt
 
 cnt=${2:-${1:-10}}
 info "Add $cnt entries"
 for ((i = 0 ; i < cnt ; i++ )); do
-   ( sed 's/dn: uid=einstein,dc=example,dc=org/dn: uid=einstein-'"${i}"',dc=example,dc=org/; s/uid: einstein/uid: einstein-'"${i}"'/; s/uidNumber: 20000/uidNumber: '"$(printf "2%04d" $i)"'/; s|homeDirectory: /home/einstein|homeDirectory: /home/einstein-'"${i}"'|; s/ownCloudUUID:: NGM1MTBhZGEtYzg2Yi00ODE1LTg4MjAtNDJjZGY4MmMzZDUx/ownCloudUUID:: '"$(uuidgen | base64)"'/' .bin/user.ldif | tee | debug_execute ldapadd -x -D 'cn=admin,dc=example,dc=org' -w "${LDAP_ADMIN_PASSWORD}" -H ldaps://localhost:30636 ) || /bin/true
+   ( sed 's/dn: uid=einstein,dc=example,dc=org/dn: uid=einstein-'"${i}"',dc=example,dc=org/; s/uid: einstein/uid: einstein-'"${i}"'/; s/uidNumber: 20000/uidNumber: '"$(printf "2%04d" $i)"'/; s|homeDirectory: /home/einstein|homeDirectory: /home/einstein-'"${i}"'|; s/ownCloudUUID:: NGM1MTBhZGEtYzg2Yi00ODE1LTg4MjAtNDJjZGY4MmMzZDUx/ownCloudUUID:: NGM1MTBhZGEtYzg2Yi00ODE1LTg4MjAtNDJjZGY4MmMzZDUx/' .bin/user.ldif | tee /tmp/foo | debug_execute ldapadd -x -D 'cn=admin,dc=example,dc=org' -w "${LDAP_ADMIN_PASSWORD}" -H ldaps://localhost:30636 ) || /bin/true
 done
 
 info "Search for each of the new $cnt entries"
 for ((i = 0 ; i < cnt ; i++ )); do
     ldap_search "uid=einstein-${i},dc=example,dc=org"
+
+    for p in $ports; do
+	if [[ $p != 30636 ]]; then
+	    [[ $(diff "$TMP.30636" "$TMP.$p" >/dev/null 2>&1) ]] || exit 1
+	fi
+    done
+    p=${ports[$((RANDOM % ${#ports[@]}))]}
+
+    cp "$TMP.$p" /tmp/foo
 done
 
 if [ -z "${1:-}" ]; then
     info "Remove $cnt entries"
     for ((i = 0 ; i < cnt ; i++ )); do
-	sed 's/dn: uid=einstein,dc=example,dc=org/dn: uid=einstein-'"${i}"',dc=example,dc=org/' .bin/user-delete.ldif | debug_execute ldapmodify -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636
+	sed 's/dn: uid=einstein,dc=example,dc=org/dn: uid=einstein-'"${i}"',dc=example,dc=org/' .bin/user-delete.ldif | debug_execute ldapmodify -x -D 'cn=admin,dc=example,dc=org' -w "${LDAP_ADMIN_PASSWORD}" -H ldaps://localhost:30636 || true
     done
 fi
 
