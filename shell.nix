@@ -15,6 +15,8 @@ mkShell rec {
     kind
     (pkgs.wrapHelm pkgs.kubernetes-helm { plugins = [ pkgs.kubernetes-helmPlugins.helm-secrets ]; })
     kustomize
+    k3s
+    k3d
     jq
     openssh
     ripgrep

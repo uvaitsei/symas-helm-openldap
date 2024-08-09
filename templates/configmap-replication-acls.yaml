@@ -6,16 +6,28 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ template "openldap.fullname" . }}-replication-acls
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
   labels:
-    app: {{ template "openldap.name" . }}
-    chart: {{ template "openldap.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+    app.kubernetes.io/component: {{ template "openldap.fullname" . }}
 {{- if .Values.extraLabels }}
 {{ toYaml .Values.extraLabels | indent 4 }}
 {{- end }}
 data:
   # replication
+  delta-syncrepl.ldif: |
+    # Load delta-syncrepl module
+    dn: cn=module,cn=config
+    cn: module
+    objectClass: olcModuleList
+    olcModuleLoad: delta-syncrepl.so
+    olcModulePath: /opt/bitnami/openldap/lib/openldap
+  syncprov.ldif: |
+    # Load syncprov module
+    dn: cn=module,cn=config
+    cn: module
+    objectClass: olcModuleList
+    olcModuleLoad: syncprov.so
+    olcModulePath: /opt/bitnami/openldap/lib/openldap
   01_serverid-modify.ldif: |
     # Set server ID
     dn: cn=config

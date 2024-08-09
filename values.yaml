@@ -192,10 +192,13 @@ replication:
   # Enter the name of your cluster, defaults to "cluster.local"
   clusterName: "cluster.local"
   retry: 60
-  timeout: 1
+  timeout: 0
+  network_timeout: 0
+  keepalive: 240:10:30
   interval: 00:00:00:10
-  starttls: "critical"
-  tls_reqcert: "never"
+  starttls: "yes"
+  tls_reqcert: "allow"
+  tls_cacert: /opt/bitnami/openldap/certs/ca.crt
 
 ## Persist data to a persistent volume
 persistence:

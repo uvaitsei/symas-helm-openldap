@@ -42,7 +42,7 @@ proxy() {
 ldap_add() {
     p=30636
     if [ $# -eq 2 ]; then
-	debug_execute ldapadd -x -D 'cn=admin,dc=example,dc=org' -w "${LDAP_ADMIN_PASSWORD}" -H ldaps://localhost:"$p" -f "$1"
+	debug_execute ldapadd -x -D 'cn=admin,dc=example,dc=org' -w "${LDAP_ADMIN_PASSWORD}" -H ldaps://localhost:"$p" -f "$1" || true
 	trap 'debug_execute ldapmodify -x -D 'cn=admin,dc=example,dc=org' -w "${LDAP_ADMIN_PASSWORD}" -H ldaps://localhost:30636 -f "$2"' SIGHUP SIGINT SIGQUIT SIGPIPE SIGTERM
     else
 	exit 1
@@ -54,7 +54,7 @@ ldap_search() {
     for p in 30636 40636 41636 42636; do
 	TMP="/tmp/$(basename $0)-$$"
 	trap "rm $TMP.$p || true" SIGHUP SIGINT SIGQUIT SIGPIPE SIGTERM EXIT
-	debug_execute ldapsearch -o nettimeout=20 -x -D "${DN}" -w "${LDAP_ADMIN_PASSWORD}" -H ldaps://localhost:"$p" -b $@ | tee "$TMP.$p"
+	debug_execute ldapsearch -o nettimeout=20 -x -D "${DN}" -w "${LDAP_ADMIN_PASSWORD}" -H ldaps://localhost:"$p" -b $@ | tee "$TMP.$p" || /bin/true
     done
 }
 

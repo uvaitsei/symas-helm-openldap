@@ -7,11 +7,8 @@ metadata:
 {{- end }}
   name: {{ template "openldap.fullname" . }}
   namespace: {{ .Release.Namespace }}
-  labels:
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
     app.kubernetes.io/component: {{ template "openldap.fullname" . }}
-    chart: {{ template "openldap.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
 {{- if .Values.extraLabels }}
 {{ toYaml .Values.extraLabels | indent 4 }}
 {{- end }}

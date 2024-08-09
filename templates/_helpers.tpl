@@ -75,12 +75,15 @@ Generate olcSyncRepl list
 {{- $configPassword :=  ternary .Values.global.configPassword "%%CONFIG_PASSWORD%%" (empty .Values.global.existingSecret) }}
 {{- $retry := .Values.replication.retry }}
 {{- $timeout := .Values.replication.timeout }}
+{{- $network_timeout := .Values.replication.network_timeout }}
+{{- $keepalive := .Values.replication.keepalive }}
 {{- $starttls := .Values.replication.starttls }}
 {{- $tls_reqcert := .Values.replication.tls_reqcert }}
+{{- $tls_cacert := .Values.replication.tls_cacert }}
 {{- $nodeCount := .Values.replicaCount | int }}
   {{- range $index0 := until $nodeCount }}
     {{- $index1 := $index0 | add1 }}
-    olcSyncRepl: rid=00{{ $index1 }} provider=ldap://{{ $name }}-{{ $index0 }}.{{ $name }}-headless.{{ $namespace }}.svc.{{ $cluster }}:1389 binddn="{{ printf "cn=%s,%s" $bindDNUser $domain }}" bindmethod=simple credentials={{ $configPassword }} searchbase="cn=config" type=refreshAndPersist retry="{{ $retry }} +" timeout={{ $timeout }} starttls={{ $starttls }} tls_reqcert={{ $tls_reqcert }}
+    olcSyncRepl: rid=00{{ $index1 }} provider=ldap://{{ $name }}-{{ $index0 }}.{{ $name }}-headless.{{ $namespace }}.svc.{{ $cluster }}:1389 binddn="{{ printf "cn=%s,%s" $bindDNUser $domain }}" bindmethod=simple credentials={{ $configPassword }} searchbase="cn=config" type=refreshAndPersist retry="{{ $retry }} +" timeout={{ $timeout }} network-timeout={{ $network_timeout }} tcp-user-timeout=0 keepalive={{ $keepalive }} starttls={{ $starttls }} filter="(objectclass=*)" logfilter="(&(objectClass=auditWriteObject)(reqResult=0))" logbase="cn=accesslog" scope=sub schemachecking=on type=refreshAndPersist retry="60 +" syncdata=accesslog tls_reqcert={{ $tls_reqcert }} tls_cacert={{ $tls_cacert }}
   {{- end -}}
 {{- end -}}
 
@@ -185,7 +188,7 @@ Cannot return list => return string comma separated
 {{- define "openldap.replicationConfigFiles" -}}
   {{- $schemas := "" -}}
   {{- if .Values.replication.enabled -}}
-    {{- $schemas = "01_serverid-modify,02_rep-modify,03_brep-modify,04_acls-modify" -}}
+    {{- $schemas = "01_serverid-modify,02_rep-modify,03_brep-modify,04_acls-modify,syncprov,delta-sycnrepl" -}}
   {{- else -}}
     {{- $schemas = "acls" -}}
   {{- end -}}

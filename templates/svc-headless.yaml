@@ -2,11 +2,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ template "openldap.fullname" . }}-headless
-  labels:
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
     app.kubernetes.io/component: {{ template "openldap.fullname" . }}
-    chart: {{ template "openldap.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
 spec:
   ports:
   {{- if .Values.service.enableLdapPort }}

@@ -12,4 +12,75 @@ https://medium.com/nuvo-group-tech/move-your-certs-to-helm-4f5f61338aca
 git config --local --add alias.changed-files '!f() { git diff --stat --name-only $1^ $1 | xargs git ls-tree --full-tree  $1 ; }; f'
 git changed-files $(git rev-parse HEAD~10)
 
+
+helm template --debug --values .bin/myval.yaml openldap . > /tmp/output.yaml
+
 kubectl delete jobs --all-namespaces --field-selector status.successful=1
+
+openssl s_client -connect openldap-0.openldap-headless.ds.svc.cluster.local:1389 -status -msg -debug
+
+openssl s_client -connect 10.244.2.7:1389 -status -msg -debug
+
+curl -k -vvv 10.244.2.7:1389
+curl -k -vvv openldap-0.openldap-headless.ds.svc.cluster.local:1389
+
+nmap -sT -p 443 -oG – 192.168.1.0/24 | grep open
+'192.168.1.1-254' or '-sn 192.168.1.0/8'
+
+for (( i=1; i<10000; i++ )) ; do openssl s_client  -connect openldap-0.openldap-headless.ds.svc.cluster.local:$i </dev/null 2>/dev/null | awk 'BEGIN {a=0} /BEGIN CERT/ {a=1} (a>0) {print} /END CERT/ {a=0}' | openssl x509 -noout -subject -issuer -dates 2>/dev/null && echo On port $i; done
+
+
+
+
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          namespace: {{ .Release.Namespace }}
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/component: {{ template "openldap.fullname" . }}
+          release: {{ .Release.Name }}
+
+
+-------------
+
+NAME: openldap
+LAST DEPLOYED: Fri Aug  9 06:24:17 2024
+NAMESPACE: ds
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+** Please be patient while the chart is being deployed **
+
+OpenLDAP has been installed. You can access the server from within the k8s cluster using:
+
+  openldap.ds.svc.cluster.local:1389
+
+  Or, via SSL/TLS at:
+
+  openldap.ds.svc.cluster.local:1636
+
+
+You can access the LDAP adminPassword and configPassword using:
+
+  kubectl get secret --namespace ds openldap -o jsonpath="{.data.LDAP_ADMIN_PASSWORD}" | base64 --decode; echo
+  kubectl get secret --namespace ds openldap -o jsonpath="{.data.LDAP_CONFIG_ADMIN_PASSWORD}" | base64 --decode; echo
+
+
+You can access the LDAP service, from within the cluster (or with kubectl port-forward) with a command like (replace password and domain):
+  ldapsearch -x -H ldap://openldap.ds.svc.cluster.local:1389 -b dc=example,dc=org -D "cn=admin,dc=example,dc=org" -w $LDAP_ADMIN_PASSWORD
+
+You can access Self Service Password, using
+     - http://ssl-ldap2.example
+  or
+    kubectl port-forward --namespace ds service/openldap-ltb-passwd 8280:80
+  and open http://localhost:8280
+  to use change your password stored in the LDAP directory.
+
+Test server health using Helm test:
+  helm test openldap
+
+Support available from Symas, email support@symas.com or file a bug against this repository.
+
+Enjoy :)
