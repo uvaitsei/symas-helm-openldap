@@ -3,7 +3,7 @@ entries:
   openldap:
   - apiVersion: v2
     appVersion: 2.6.8
-    created: "2024-08-09T15:56:16.111299441Z"
+    created: "2024-08-10T03:45:51.924069804Z"
     dependencies:
     - condition: ltb-passwd.enabled
       name: ltb-passwd
@@ -19,7 +19,7 @@ entries:
       - bitnami-common
       version: ~2
     description: The OpenLDAP directory server, with support from Symas Corp.
-    digest: e5ddb992854329f514c61f9ce4b556852db45796f485e9de99fa2e10d5386db3
+    digest: b92e20e40652ab31ace610b14eaa2e5cc3058b17cd1e26f1d26442c9b9be335a
     home: https://www.openldap.org
     icon: https://raw.githubusercontent.com/symas/helm-openldap/master/logo.png
     keywords:
@@ -38,7 +38,7 @@ entries:
     version: 1.1.4
   - apiVersion: v2
     appVersion: 2.6.8
-    created: "2024-08-09T15:56:16.106940809Z"
+    created: "2024-08-10T03:45:51.921297166Z"
     dependencies:
     - condition: ltb-passwd.enabled
       name: ltb-passwd
@@ -73,7 +73,7 @@ entries:
     version: 1.1.3
   - apiVersion: v2
     appVersion: 2.6.8
-    created: "2024-08-09T15:56:16.104200253Z"
+    created: "2024-08-10T03:45:51.918528506Z"
     dependencies:
     - condition: ltb-passwd.enabled
       name: ltb-passwd
@@ -108,7 +108,7 @@ entries:
     version: 1.1.2
   - apiVersion: v2
     appVersion: 2.6.8
-    created: "2024-08-09T15:56:16.101377113Z"
+    created: "2024-08-10T03:45:51.91463342Z"
     dependencies:
     - condition: ltb-passwd.enabled
       name: ltb-passwd
@@ -143,7 +143,7 @@ entries:
     version: 1.1.1
   - apiVersion: v2
     appVersion: 2.6.6
-    created: "2024-08-09T15:56:16.09774768Z"
+    created: "2024-08-10T03:45:51.910719735Z"
     dependencies:
     - condition: ltb-passwd.enabled
       name: ltb-passwd
@@ -180,7 +180,7 @@ entries:
     version: 1.0.8
   - apiVersion: v2
     appVersion: 2.6.6
-    created: "2024-08-09T15:56:16.095544842Z"
+    created: "2024-08-10T03:45:51.908504285Z"
     dependencies:
     - condition: ltb-passwd.enabled
       name: ltb-passwd
@@ -217,7 +217,7 @@ entries:
     version: 1.0.4
   - apiVersion: v2
     appVersion: 2.6.6
-    created: "2024-08-09T15:56:16.092900546Z"
+    created: "2024-08-10T03:45:51.905913516Z"
     dependencies:
     - condition: ltb-passwd.enabled
       name: ltb-passwd
@@ -254,7 +254,7 @@ entries:
     version: 1.0.3
   - apiVersion: v2
     appVersion: 2.6.6
-    created: "2024-08-09T15:56:16.089464217Z"
+    created: "2024-08-10T03:45:51.902502275Z"
     dependencies:
     - condition: ltb-passwd.enabled
       name: ltb-passwd
@@ -291,7 +291,7 @@ entries:
     version: 1.0.2
   - apiVersion: v2
     appVersion: 2.6.6
-    created: "2024-08-09T15:56:16.086837204Z"
+    created: "2024-08-10T03:45:51.899889876Z"
     dependencies:
     - condition: ltb-passwd.enabled
       name: ltb-passwd
@@ -326,4 +326,4 @@ entries:
     urls:
     - openldap-1.0.1.tgz
     version: 1.0.1
-generated: "2024-08-09T15:56:16.084034191Z"
+generated: "2024-08-10T03:45:51.897097982Z"
