@@ -7,7 +7,6 @@ kind: ConfigMap
 metadata:
   name: {{ template "openldap.fullname" . }}-replication-acls
   labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
-  labels:
     app.kubernetes.io/component: {{ template "openldap.fullname" . }}
 {{- if .Values.extraLabels }}
 {{ toYaml .Values.extraLabels | indent 4 }}
