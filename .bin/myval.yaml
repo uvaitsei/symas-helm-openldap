@@ -21,6 +21,7 @@ ltb-passwd:
     hosts:
     - "ssl-ldap2.example"
 phpldapadmin:
+  enabled: true
   ingress:
     hosts:
     - "phpldapadmin.example"
@@ -111,9 +112,6 @@ service:
   type: NodePort
 initTLSSecret:
   tls_enabled: true
-  image:
-    registry: docker.io
-    repository: alpine/openssl
-    tag: latest
-    pullPolicy: IfNotPresent
-  secret: "myval-certs"
+  secret: "myval-tls-certs"
+replication:
+  tls_enabled: true

@@ -86,51 +86,6 @@ spec:
           - secretRef:
               name: {{ template "openldap.secretName" . }}
     {{- end }}
-      {{- if .Values.initContainers }}
-        {{- include "common.tplvalues.render" (dict "value" .Values.initContainers "context" $) | nindent 8 }}
-      {{- end }}
-      {{- if .Values.initTLSSecret.tls_enabled}}
-        - name: init-tls-secret
-          image: {{ include "openldap.initTLSSecretImage" . }}
-          imagePullPolicy: {{ .Values.initTLSSecret.image.pullPolicy | quote }}
-          command:
-            - sh
-            - -c
-            - |
-              {{- if and ( .Values.initTLSSecret.tls_enabled ) (hasKey .Values.initTLSSecret "secret") (eq .Values.initTLSSecret.secret "") }}
-              openssl req -x509 -newkey rsa:4096 -nodes -subj '/CN={{ .Values.global.ldapDomain }}' -keyout /tmp-certs/tls.key -out /tmp-certs/tls.crt -days 365
-              chmod 777  /tmp-certs/*
-              {{- end }}
-              cp -Lr /tmp-certs/* /certs
-              [ -e /certs/ca.crt ] || cp -a /certs/tls.crt /certs/ca.crt
-          {{- if .Values.containerSecurityContext.enabled }}
-          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
-          {{- end }}
-          {{- if .Values.initTLSSecret.resources }}
-          resources: {{- toYaml .Values.initTLSSecret.resources | nindent 12 }}
-          {{- end }}
-          volumeMounts:
-            - name: certs
-              mountPath: "/certs"
-            - name: secret-certs
-              mountPath: "/tmp-certs"
-      {{- end }}
-      {{- if .Values.volumePermissions.enabled }}
-        - name: volume-permissions
-          image: {{ include "openldap.volumePermissionsImage" . }}
-          imagePullPolicy: {{ .Values.volumePermissions.image.pullPolicy | quote }}
-          command: {{- include "common.tplvalues.render" (dict "value" .Values.volumePermissions.image.command "context" $) | nindent 12 }}
-          {{- if .Values.containerSecurityContext.enabled }}
-          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
-          {{- end }}
-          {{- if .Values.volumePermissions.resources }}
-          resources: {{- toYaml .Values.volumePermissions.resources | nindent 12 }}
-          {{- end }}
-          volumeMounts:
-            - mountPath: /bitnami
-              name: data
-      {{- end }}
-
       serviceAccountName: {{ template "openldap.serviceAccountName" . }}
       {{- include "openldap.imagePullSecrets" . | nindent 6 }}
       {{- if .Values.hostAliases }}
@@ -193,9 +148,9 @@ spec:
           {{- end }}
           ports:
             - name: ldap-port
-              containerPort: 1389
+              containerPort: {{ .Values.global.ldapPort }}
             - name: ssl-ldap-port
-              containerPort: 1636
+              containerPort: {{ .Values.global.sslLdapPort }}
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             tcpSocket:
@@ -235,7 +190,7 @@ spec:
             - name: data
               mountPath: /openldap
             - name: certs
-              mountPath: /opt/bitnami/openldap/certs
+              mountPath: /certs
               readOnly: true
             {{- range $file := (include "openldap.replicationConfigFiles" . | split ",") }}
             - name: replication-acls
@@ -306,15 +261,12 @@ spec:
           emptyDir:
             medium: Memory
 {{- end }}
-        - name: certs
-          emptyDir:
-            medium: Memory
 {{- if and ( .Values.initTLSSecret.tls_enabled ) (hasKey .Values.initTLSSecret "secret") (ne .Values.initTLSSecret.secret "") }}
-        - name: secret-certs
+        - name: certs
           secret:
             secretName: {{ .Values.initTLSSecret.secret }}
 {{- else }}
-        - name: secret-certs
+        - name: certs
           emptyDir:
             medium: Memory
 {{- end }}
