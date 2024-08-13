@@ -16,4 +16,7 @@ service:
   sslLdapPortNodePort: 30636
   type: NodePort
 initTLSSecret:
+  secret: "myval-tls-certs"
   tls_enabled: true
+replication:
+  tls_enabled: false
