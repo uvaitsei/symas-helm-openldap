@@ -198,7 +198,7 @@ Cannot return list => return string comma separated
 {{- define "openldap.replicationConfigFiles" -}}
   {{- $schemas := "" -}}
   {{- if .Values.replication.enabled -}}
-    {{- $schemas = "00_syncprov-load,01_serverid-modify,02_rep-modify,03_brep-modify,05_syncprov,06_acls-modify" -}}
+    {{- $schemas = "00_syncprov-load,01_serverid-modify,02_rep-modify,03_brep-modify,04_syncprov-add,06_acls-modify" -}}
   {{- else -}}
     {{- $schemas = "acls" -}}
   {{- end -}}

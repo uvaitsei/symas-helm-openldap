@@ -45,13 +45,7 @@ data:
     changetype: modify
     add: olcMirrorMode
     olcMirrorMode: TRUE
-  04_syncprov.ldif: |
-    dn: olcOverlay=syncprov,olcDatabase={0}config,cn=config
-    objectClass: olcOverlayConfig
-    objectClass: olcSyncProvConfig
-    olcSpCheckpoint: 100 10
-    olcSpSessionlog: 50000
-  05_syncprov.ldif: |
+  04_syncprov-add.ldif: |
     dn: olcOverlay=syncprov,olcDatabase={2}mdb,cn=config
     objectClass: olcOverlayConfig
     objectClass: olcSyncProvConfig

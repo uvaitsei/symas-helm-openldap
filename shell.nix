@@ -30,6 +30,7 @@ mkShell rec {
     shellcheck
     tmate
     lsof
+    yq
   ];
   shellHook =
     let
