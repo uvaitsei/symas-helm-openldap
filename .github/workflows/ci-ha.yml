@@ -7,10 +7,9 @@ jobs:
     steps:
     - name: Check out code
       uses: actions/checkout@v3
-    - name: Setup Kind/K8S Cluster
-      uses: ./.github/actions/setup
-      with:
-        install-chaos: true
+    - name: Start Minikube(rnetes) Cluster
+      id: minikube
+      uses: medyagh/setup-minikube@latest
     - name: Create namespace
       shell: bash
       run: |
