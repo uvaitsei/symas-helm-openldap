@@ -7,9 +7,10 @@ jobs:
     steps:
     - name: Check out code
       uses: actions/checkout@v3
-    - name: Start Minikube(rnetes) Cluster
-      id: minikube
-      uses: medyagh/setup-minikube@latest
+    - name: Setup Kind/K8S Cluster
+      uses: ./.github/actions/setup
+      with:
+        install-chaos: true
     - name: Create namespace
       shell: bash
       run: |
@@ -55,13 +56,3 @@ jobs:
           if ! grep -q "CN = example.org" /tmp/test-cert.txt; then  echo exit 1; fi
     - name: Run tests against the OpenLDAP cluster
       run: env DEBUG=true .bin/tests.sh -d 100
-    - name: Enable chaos within cluster to test cluster resiliance
-      shell: bash
-      run: |
-          kubectl apply -f .bin/chaos.yaml
-    - name: Run tests again, now amid chaos
-      run: env DEBUG=true .bin/tests.sh -d 100
-    - name: Extended testing over a period of 20 minutes amid chaos
-      shell: bash
-      run: |
-          for i in {1..20}; do echo $i of 20; LDAPTLS_REQCERT=never ldapsearch -o nettimeout=20 -x -D 'cn=admin,dc=example,dc=org' -w Not@SecurePassw0rd -H ldaps://localhost:30636 -b 'dc=example,dc=org' > /dev/null && sleep 60 ; done

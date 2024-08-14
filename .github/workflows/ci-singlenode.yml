@@ -7,8 +7,7 @@ jobs:
     steps:
     - name: Check out code
       uses: actions/checkout@v1
-    - name: Run custom action
-      # Use the location in the repository (without action.yml)
+    - name: Setup Kind/K8S Cluster
       uses: ./.github/actions/setup
       with:
         install-chaos: false
