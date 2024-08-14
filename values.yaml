@@ -186,6 +186,11 @@ pdb:
 #     by self read
 #     by * none
 
+# Custom File Sets
+# If not defined, the following default ACLs are applied:
+# customFileSets:
+#   server.conf: |-
+
 ## Replication
 replication:
   enabled: true

@@ -55,7 +55,7 @@ if ! kind get clusters -q | grep -q $KIND_CLUSTER_NAME; then
     # https://github.com/containerd/containerd/blob/main/docs/cri/config.md#registry-configuration
     # See: https://github.com/containerd/containerd/blob/main/docs/hosts.md
     info "Creating a Kind/Kubernetes cluster"
-    cat <<EOF | kind create cluster --name $KIND_CLUSTER_NAME --image=kindest/node:v1.29.4@sha256:3abb816a5b1061fb15c6e9e60856ec40d56b7b52bcea5f5f1350bc6e2320b6f8 --config=-
+    cat <<EOF | kind create cluster --name $KIND_CLUSTER_NAME --image=kindest/node:v1.31.0 --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
