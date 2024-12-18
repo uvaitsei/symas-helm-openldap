@@ -3,15 +3,16 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/apache/apisix/blob/master/LICENSE)
 ![Version](https://img.shields.io/static/v1?label=Openldap&message=2.6.3&color=blue)
 
-# Supported OpenLDAP Helm Chart by Symas Corp
+# UVA ITS EI fork of OpenLDAP Helm Chart by Symas Corp
 
 ## TL;DR
 
 To install the chart with the release name `my-release`:
 
 ```bash
-$ helm repo add helm-openldap https://symas.github.io/helm-openldap/
-$ helm install my-release helm-openldap/openldap
+$ # helm install my-release oci://ghcr.io/uvaitsei/openldap-helm-chart --dry-run
+$ helm install my-release oci://ghcr.io/uvaitsei/openldap-helm-chart
+
 ```
 
 ## What's here?
@@ -397,7 +398,7 @@ or modify internal configuration (e.g. `cn=config` , `cn=module{0},cn=config`)
 ### 1.0.4
 
 * Updated tests
-* 
+*
 
 ### 1.0.3
 
