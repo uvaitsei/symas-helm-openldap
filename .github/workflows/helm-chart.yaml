@@ -34,7 +34,7 @@ jobs:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
 
       - name: Create helm chart package
-        run: helm package helm/
+        run: helm package .
 
       - name: Push helm chart package
         run: helm push *.tgz oci://ghcr.io/uvaitsei
